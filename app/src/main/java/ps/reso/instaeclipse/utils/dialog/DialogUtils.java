@@ -1597,6 +1597,7 @@ public class DialogUtils {
 
     private static String getLiquidGlassStyleName(Context context) {
         switch (FeatureFlags.liquidGlassStyle) {
+            case 5: return I18n.t(context, R.string.liquid_glass_style_ios27);
             case 1: return I18n.t(context, R.string.liquid_glass_style_docked);
             case 2: return I18n.t(context, R.string.liquid_glass_style_aurora);
             case 3: return I18n.t(context, R.string.liquid_glass_style_obsidian);
@@ -1608,16 +1609,25 @@ public class DialogUtils {
 
     private static void showLiquidGlassStylePicker(Context context) {
         String[] labels = {
+                I18n.t(context, R.string.liquid_glass_style_ios27),
                 I18n.t(context, R.string.liquid_glass_style_floating),
                 I18n.t(context, R.string.liquid_glass_style_docked),
                 I18n.t(context, R.string.liquid_glass_style_aurora),
                 I18n.t(context, R.string.liquid_glass_style_obsidian),
                 I18n.t(context, R.string.liquid_glass_style_crystal)
         };
+        final int[] values = { 5, 0, 1, 2, 3, 4 };
+        int currentIndex = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == FeatureFlags.liquidGlassStyle) {
+                currentIndex = i;
+                break;
+            }
+        }
         new AlertDialog.Builder(context)
                 .setTitle(I18n.t(context, R.string.liquid_glass_style))
-                .setSingleChoiceItems(labels, FeatureFlags.liquidGlassStyle, (dialog, which) -> {
-                    FeatureFlags.liquidGlassStyle = which;
+                .setSingleChoiceItems(labels, currentIndex, (dialog, which) -> {
+                    FeatureFlags.liquidGlassStyle = values[which];
                     SettingsManager.saveAllFlags();
                     ps.reso.instaeclipse.mods.ui.LiquidGlassNavBarHook.refreshCurrentActivity();
                     dialog.dismiss();

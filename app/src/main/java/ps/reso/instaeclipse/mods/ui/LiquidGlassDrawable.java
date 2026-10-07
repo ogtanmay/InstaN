@@ -15,6 +15,8 @@ import android.graphics.drawable.Drawable;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import ps.reso.instaeclipse.utils.feature.FeatureFlags;
+
 /**
  * Custom glassmorphism drawable implementing the "Liquid Glass" effect
  * for Instagram's bottom navigation bar.
@@ -33,6 +35,7 @@ public class LiquidGlassDrawable extends Drawable {
     public static final int STYLE_AURORA = 2;
     public static final int STYLE_OBSIDIAN = 3;
     public static final int STYLE_CRYSTAL_CLEAR = 4;
+    public static final int STYLE_IOS27_LIQUID = 5;
 
     private final Context context;
     private int style;
@@ -50,11 +53,15 @@ public class LiquidGlassDrawable extends Drawable {
 
     private float cornerRadius = 0f;
     private final float[] cornerRadii = new float[8];
+    private float opacityMultiplier = 1.0f;
+    private float customCornerRadius = -1f;
 
     public LiquidGlassDrawable(Context context, int style, boolean showSheen) {
         this.context = context.getApplicationContext();
         this.style = style;
         this.showSheen = showSheen;
+        this.opacityMultiplier = Math.max(0.2f, Math.min(1.0f, FeatureFlags.liquidGlassOpacity / 100f));
+        this.customCornerRadius = FeatureFlags.liquidGlassCornerRadius;
 
         strokePaint.setStyle(Paint.Style.STROKE);
         sheenPaint.setStyle(Paint.Style.FILL);
@@ -64,6 +71,27 @@ public class LiquidGlassDrawable extends Drawable {
     public void updateStyle(int style, boolean showSheen) {
         this.style = style;
         this.showSheen = showSheen;
+        invalidateShader();
+        invalidateSelf();
+    }
+
+    public void setOpacity(float opacity) {
+        this.opacityMultiplier = Math.max(0.15f, Math.min(1.0f, opacity));
+        invalidateShader();
+        invalidateSelf();
+    }
+
+    public void setCustomCornerRadius(float radiusDp) {
+        this.customCornerRadius = radiusDp;
+        invalidateShader();
+        invalidateSelf();
+    }
+
+    public void update(int style, boolean showSheen, float opacity, float radiusDp) {
+        this.style = style;
+        this.showSheen = showSheen;
+        this.opacityMultiplier = Math.max(0.15f, Math.min(1.0f, opacity));
+        this.customCornerRadius = radiusDp;
         invalidateShader();
         invalidateSelf();
     }
@@ -96,15 +124,15 @@ public class LiquidGlassDrawable extends Drawable {
 
         // Corner radii setup
         if (style == STYLE_DOCKED) {
-            float topRadius = dp(22f);
+            float topRadius = customCornerRadius > 0 ? dp(customCornerRadius) : dp(22f);
             cornerRadius = topRadius;
             cornerRadii[0] = topRadius; cornerRadii[1] = topRadius;
             cornerRadii[2] = topRadius; cornerRadii[3] = topRadius;
             cornerRadii[4] = 0f; cornerRadii[5] = 0f;
             cornerRadii[6] = 0f; cornerRadii[7] = 0f;
         } else {
-            // Pill shape: rounded by height/2 (capped at 28dp)
-            cornerRadius = Math.min(height / 2f, dp(28f));
+            // Pill shape: rounded by customCornerRadius or height/2
+            cornerRadius = customCornerRadius > 0 ? dp(customCornerRadius) : Math.min(height / 2f, dp(28f));
             for (int i = 0; i < 8; i++) cornerRadii[i] = cornerRadius;
         }
 
@@ -177,6 +205,41 @@ public class LiquidGlassDrawable extends Drawable {
                 strokePositions = new float[]{0.0f, 0.25f, 0.7f, 1.0f};
                 break;
 
+            case STYLE_IOS27_LIQUID:
+                // Ultra-futuristic iOS 27 Liquid Glass with prismatic chromatic dispersion and fluid caustics
+                if (dark) {
+                    bodyColors = new int[]{
+                            0x66334155, // Frosted ultra-translucent sapphire slate
+                            0x3E1E293B, // Mid-depth fluid glass refraction
+                            0x340F172A, // Deep inner volume refraction
+                            0x4E1E1B4B  // Subtle chromatic iridescent bottom base
+                    };
+                    bodyPositions = new float[]{0.0f, 0.35f, 0.70f, 1.0f};
+                    strokeColors = new int[]{
+                            0xFAFFFFFF, // Diamond apex specular point
+                            0xBDC4B5FD, // Prismatic violet-lavender dispersion
+                            0x8538BDF8, // Refractive cyan caustic highlight
+                            0x7E818CF8  // Subsurface ambient rim
+                    };
+                    strokePositions = new float[]{0.0f, 0.28f, 0.65f, 1.0f};
+                } else {
+                    bodyColors = new int[]{
+                            0xB5FFFFFF, // Pure crystalline frost
+                            0x8DF8FAFC, // Liquid reflection layer
+                            0x7AE2E8F0, // Translucent mineral glass
+                            0x9AF1F5F9  // Ambient fluid beam
+                    };
+                    bodyPositions = new float[]{0.0f, 0.35f, 0.70f, 1.0f};
+                    strokeColors = new int[]{
+                            0xFAFFFFFF, // Diamond apex specular reflection
+                            0xB8E0E7FF, // Prismatic sky-indigo dispersion
+                            0x9038BDF8, // Caustic light refraction
+                            0x98A5B4FC  // Delicate iridescent edge
+                    };
+                    strokePositions = new float[]{0.0f, 0.28f, 0.65f, 1.0f};
+                }
+                break;
+
             case STYLE_DOCKED:
             case STYLE_FLOATING_PILL:
             default:
@@ -216,6 +279,14 @@ public class LiquidGlassDrawable extends Drawable {
                 break;
         }
 
+        if (opacityMultiplier < 0.99f) {
+            for (int i = 0; i < bodyColors.length; i++) {
+                int a = (bodyColors[i] >>> 24);
+                int newA = Math.round(a * opacityMultiplier);
+                bodyColors[i] = (newA << 24) | (bodyColors[i] & 0x00FFFFFF);
+            }
+        }
+
         LinearGradient bodyShader = new LinearGradient(
                 boundsF.centerX(), boundsF.top,
                 boundsF.centerX(), boundsF.bottom,
@@ -245,6 +316,10 @@ public class LiquidGlassDrawable extends Drawable {
                 Shader.TileMode.CLAMP
         );
         sheenPaint.setShader(sheenShader);
+
+        innerGlowPaint.setStyle(Paint.Style.STROKE);
+        innerGlowPaint.setStrokeWidth(dp(1.0f));
+        innerGlowPaint.setColor(dark ? 0x24FFFFFF : 0x45FFFFFF);
     }
 
     @Override
@@ -269,6 +344,19 @@ public class LiquidGlassDrawable extends Drawable {
         Path strokePath = new Path();
         strokePath.addRoundRect(strokeBoundsF, cornerRadii, Path.Direction.CW);
         canvas.drawPath(strokePath, strokePaint);
+
+        // 4. Draw Inner Volumetric Caustics / Prismatic Glow for iOS 27
+        if (style == STYLE_IOS27_LIQUID) {
+            canvas.save();
+            canvas.clipPath(clipPath);
+            RectF innerRect = new RectF(boundsF);
+            float inset = dp(1.8f);
+            innerRect.inset(inset, inset);
+            Path innerPath = new Path();
+            innerPath.addRoundRect(innerRect, cornerRadii, Path.Direction.CW);
+            canvas.drawPath(innerPath, innerGlowPaint);
+            canvas.restore();
+        }
     }
 
     @Override

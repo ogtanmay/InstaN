@@ -1,25 +1,27 @@
 package ps.reso.instaeclipse.mods.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
-import android.graphics.Outline;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewOutlineProvider;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.widget.FrameLayout;
 
 import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
 import ps.reso.instaeclipse.R;
+import ps.reso.instaeclipse.utils.dialog.DialogUtils;
 import ps.reso.instaeclipse.utils.feature.FeatureFlags;
 import ps.reso.instaeclipse.utils.feature.FeatureStatusTracker;
 import ps.reso.instaeclipse.utils.log.ModuleLog;
@@ -27,31 +29,22 @@ import ps.reso.instaeclipse.utils.log.ModuleLog;
 /**
  * Liquid Glass Navigation Bar Hook
  *
- * Transforms Instagram's bottom navigation bar into a translucent, frosted liquid glass
- * floating dock with specular rim highlights, optical curvature sheen, and elevation.
+ * Replaces Instagram's traditional bottom bar with the modern floating liquid glass
+ * slider navigation bar and create action popup (matching iOS 18 glass aesthetics).
  */
 public class LiquidGlassNavBarHook {
 
     private static final Set<Activity> watchedActivities =
             Collections.newSetFromMap(new WeakHashMap<>());
-    private static final WeakHashMap<View, OriginalNavBarState> sOriginalStates =
+    private static final WeakHashMap<Activity, LiquidGlassSliderBarView> sSliderBars =
             new WeakHashMap<>();
-
-    private static class OriginalNavBarState {
-        Drawable background;
-        int leftMargin;
-        int rightMargin;
-        int topMargin;
-        int bottomMargin;
-        float elevation;
-        boolean clipToOutline;
-        ViewOutlineProvider outlineProvider;
-    }
+    private static final WeakHashMap<Activity, View> sNativeNavBars =
+            new WeakHashMap<>();
 
     public void install(ClassLoader classLoader) {
         try {
             FeatureStatusTracker.setHooked("LiquidGlassNavBar");
-            ModuleLog.line("(InstaEclipse | LiquidGlass): Hook initialized");
+            ModuleLog.line("(InstaEclipse | LiquidGlass): Hook installed");
         } catch (Throwable t) {
             ModuleLog.line("(InstaEclipse | LiquidGlass): install error: " + t.getMessage());
         }
@@ -96,102 +89,19 @@ public class LiquidGlassNavBarHook {
     }
 
     private static void applyOrRestore(Activity activity) {
-        View navBar = findBottomNavBar(activity);
-        if (navBar == null) return;
+        View nativeNavBar = findBottomNavBar(activity);
+        if (nativeNavBar != null) {
+            sNativeNavBars.put(activity, nativeNavBar);
+        }
 
         if (FeatureFlags.enableLiquidGlassNavBar) {
-            applyLiquidGlass(activity, navBar);
+            attachSliderBar(activity, nativeNavBar);
         } else {
-            restoreOriginal(activity, navBar);
+            detachSliderBar(activity);
         }
     }
 
-    private static View findBottomNavBar(Activity activity) {
-        Resources res = activity.getResources();
-        String pkg = activity.getPackageName();
-
-        // 1. Direct standard IDs
-        String[] possibleBarIds = {
-                "tab_bar", "tab_bar_container", "bottom_navigation_bar",
-                "main_tab_bar", "igds_tab_bar", "clips_tab_bar_background"
-        };
-        for (String idName : possibleBarIds) {
-            int id = res.getIdentifier(idName, "id", pkg);
-            if (id != 0) {
-                View v = activity.findViewById(id);
-                if (v != null && v.getVisibility() == View.VISIBLE) {
-                    return v;
-                }
-            }
-        }
-
-        // 2. Discover via child tab icons (search_tab, clips_tab, feed_tab, profile_tab)
-        String[] tabIds = {"search_tab", "clips_tab", "feed_tab", "profile_tab", "news_tab", "direct_tab"};
-        for (String tabIdName : tabIds) {
-            int id = res.getIdentifier(tabIdName, "id", pkg);
-            if (id != 0) {
-                View tabView = activity.findViewById(id);
-                if (tabView != null && tabView.getParent() instanceof ViewGroup) {
-                    ViewGroup tabRow = (ViewGroup) tabView.getParent();
-                    // If tabRow is contained inside a dedicated container wrapper at the bottom:
-                    if (tabRow.getParent() instanceof ViewGroup) {
-                        ViewGroup parentContainer = (ViewGroup) tabRow.getParent();
-                        int height = parentContainer.getHeight();
-                        int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
-                        int[] loc = new int[2];
-                        parentContainer.getLocationOnScreen(loc);
-                        if (loc[1] + height >= screenHeight - dpToPx(activity, 40) && height <= dpToPx(activity, 110) && height >= dpToPx(activity, 40)) {
-                            return parentContainer;
-                        }
-                    }
-                    return tabRow;
-                }
-            }
-        }
-
-        // 3. Fallback: Search view tree for a ViewGroup anchored to the bottom
-        View decor = activity.getWindow() != null ? activity.getWindow().getDecorView() : null;
-        if (decor instanceof ViewGroup) {
-            return scanForBottomBar((ViewGroup) decor, activity);
-        }
-
-        return null;
-    }
-
-    private static View scanForBottomBar(ViewGroup root, Activity activity) {
-        int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
-        int minBottom = screenHeight - dpToPx(activity, 30);
-        int minH = dpToPx(activity, 44);
-        int maxH = dpToPx(activity, 96);
-
-        java.util.ArrayDeque<ViewGroup> queue = new java.util.ArrayDeque<>();
-        queue.push(root);
-
-        View bestCandidate = null;
-        while (!queue.isEmpty()) {
-            ViewGroup parent = queue.pop();
-            for (int i = 0; i < parent.getChildCount(); i++) {
-                View child = parent.getChildAt(i);
-                if (child.getVisibility() != View.VISIBLE) continue;
-                int h = child.getHeight();
-                int[] loc = new int[2];
-                child.getLocationOnScreen(loc);
-                int bottom = loc[1] + h;
-
-                if (bottom >= minBottom && h >= minH && h <= maxH && child instanceof ViewGroup vg) {
-                    if (vg.getChildCount() >= 3 && vg.getChildCount() <= 6) {
-                        bestCandidate = child;
-                    }
-                }
-                if (child instanceof ViewGroup vg) {
-                    queue.push(vg);
-                }
-            }
-        }
-        return bestCandidate;
-    }
-
-    private static void applyLiquidGlass(Activity activity, View navBar) {
+    private static void attachSliderBar(Activity activity, View nativeNavBar) {
         Window window = activity.getWindow();
         if (window != null) {
             window.setNavigationBarColor(Color.TRANSPARENT);
@@ -200,114 +110,242 @@ public class LiquidGlassNavBarHook {
             }
         }
 
-        // Save original layout & background state if not saved yet
-        if (!sOriginalStates.containsKey(navBar)) {
-            OriginalNavBarState state = new OriginalNavBarState();
-            state.background = navBar.getBackground();
-            ViewGroup.LayoutParams lp = navBar.getLayoutParams();
-            if (lp instanceof ViewGroup.MarginLayoutParams mlp) {
-                state.leftMargin = mlp.leftMargin;
-                state.rightMargin = mlp.rightMargin;
-                state.topMargin = mlp.topMargin;
-                state.bottomMargin = mlp.bottomMargin;
-            }
-            state.elevation = navBar.getElevation();
-            state.clipToOutline = navBar.getClipToOutline();
-            state.outlineProvider = navBar.getOutlineProvider();
-            sOriginalStates.put(navBar, state);
+        // Hide native navigation bar visually (keep it in layout tree so clicks work)
+        if (nativeNavBar != null && nativeNavBar.getVisibility() != View.INVISIBLE) {
+            nativeNavBar.setVisibility(View.INVISIBLE);
         }
 
-        // 1. Hide hairline dividers/shadows
-        hideDividers(activity, navBar);
+        // Hide divider shadows
+        hideDividers(activity);
 
-        // 2. Set Liquid Glass Drawable
-        Drawable currentBg = navBar.getBackground();
-        if (!(currentBg instanceof LiquidGlassDrawable)) {
-            LiquidGlassDrawable glass = new LiquidGlassDrawable(
-                    activity,
-                    FeatureFlags.liquidGlassStyle,
-                    FeatureFlags.liquidGlassBorderSheen
+        ViewGroup decor = (ViewGroup) (activity.getWindow() != null ? activity.getWindow().getDecorView() : null);
+        if (decor == null) return;
+
+        LiquidGlassSliderBarView existing = sSliderBars.get(activity);
+        if (existing == null) {
+            LiquidGlassSliderBarView sliderBar = new LiquidGlassSliderBarView(activity);
+            sliderBar.setId(R.id.tag_liquid_glass_applied);
+
+            // Tab click handling
+            sliderBar.setOnTabSelectedListener(index -> clickNativeTab(activity, index));
+
+            // Create popup action handling
+            sliderBar.setOnCreateActionSelectedListener(action -> launchCreation(activity, action));
+
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
             );
-            navBar.setBackground(glass);
+            decor.addView(sliderBar, lp);
+            sSliderBars.put(activity, sliderBar);
+            existing = sliderBar;
         } else {
-            ((LiquidGlassDrawable) currentBg).updateStyle(
+            existing.applyConfiguration(
                     FeatureFlags.liquidGlassStyle,
-                    FeatureFlags.liquidGlassBorderSheen
+                    FeatureFlags.liquidGlassOpacity,
+                    FeatureFlags.liquidGlassWidthMargin,
+                    FeatureFlags.liquidGlassHeight,
+                    FeatureFlags.liquidGlassCornerRadius,
+                    FeatureFlags.liquidGlassBorderSheen,
+                    FeatureFlags.liquidGlassShowFab
             );
         }
 
-        // 3. Clear any solid backgrounds on child tabs so glass shines through
-        if (navBar instanceof ViewGroup vg) {
-            for (int i = 0; i < vg.getChildCount(); i++) {
-                View child = vg.getChildAt(i);
-                if (child.getBackground() != null && !(child.getBackground() instanceof LiquidGlassDrawable)) {
-                    child.setBackground(new ColorDrawable(Color.TRANSPARENT));
+        // Keep slider tab indicator synced with Instagram's active tab
+        syncWithNativeTab(activity, existing);
+    }
+
+    private static void detachSliderBar(Activity activity) {
+        LiquidGlassSliderBarView sliderBar = sSliderBars.remove(activity);
+        if (sliderBar != null) {
+            ViewGroup parent = (ViewGroup) sliderBar.getParent();
+            if (parent != null) parent.removeView(sliderBar);
+        }
+
+        View nativeNavBar = sNativeNavBars.get(activity);
+        if (nativeNavBar != null) {
+            nativeNavBar.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private static void clickNativeTab(Activity activity, int index) {
+        Resources res = activity.getResources();
+        String pkg = activity.getPackageName();
+        int tabId = 0;
+        switch (index) {
+            case 0: // Home
+                tabId = res.getIdentifier("feed_tab", "id", pkg);
+                break;
+            case 1: // Reel
+                tabId = res.getIdentifier("clips_tab", "id", pkg);
+                if (tabId == 0) tabId = res.getIdentifier("search_tab", "id", pkg);
+                break;
+            case 2: // Heart / Activity
+                tabId = res.getIdentifier("news_tab", "id", pkg);
+                if (tabId == 0) tabId = res.getIdentifier("direct_tab", "id", pkg);
+                if (tabId == 0) tabId = res.getIdentifier("notification_tab", "id", pkg);
+                break;
+            case 3: // Profile
+                tabId = res.getIdentifier("profile_tab", "id", pkg);
+                break;
+        }
+
+        if (tabId != 0) {
+            View tabView = activity.findViewById(tabId);
+            if (tabView != null) {
+                tabView.performClick();
+                return;
+            }
+        }
+
+        // Secondary fallback
+        if (index == 0) {
+            clickFirstMatching(activity, "feed_tab", "home_tab");
+        } else if (index == 1) {
+            clickFirstMatching(activity, "clips_tab", "search_tab");
+        } else if (index == 2) {
+            clickFirstMatching(activity, "news_tab", "direct_tab", "notification_tab");
+        } else if (index == 3) {
+            clickFirstMatching(activity, "profile_tab", "user_tab");
+        }
+    }
+
+    private static void clickFirstMatching(Activity activity, String... ids) {
+        Resources res = activity.getResources();
+        String pkg = activity.getPackageName();
+        for (String idName : ids) {
+            int id = res.getIdentifier(idName, "id", pkg);
+            if (id != 0) {
+                View v = activity.findViewById(id);
+                if (v != null) {
+                    v.performClick();
+                    return;
+                }
+            }
+        }
+    }
+
+    private static void syncWithNativeTab(Activity activity, LiquidGlassSliderBarView sliderBar) {
+        Resources res = activity.getResources();
+        String pkg = activity.getPackageName();
+
+        int feedId = res.getIdentifier("feed_tab", "id", pkg);
+        int clipsId = res.getIdentifier("clips_tab", "id", pkg);
+        int newsId = res.getIdentifier("news_tab", "id", pkg);
+        int profileId = res.getIdentifier("profile_tab", "id", pkg);
+
+        if (feedId != 0 && isSelected(activity, feedId)) {
+            sliderBar.syncSelectedTab(0);
+        } else if (clipsId != 0 && isSelected(activity, clipsId)) {
+            sliderBar.syncSelectedTab(1);
+        } else if (newsId != 0 && isSelected(activity, newsId)) {
+            sliderBar.syncSelectedTab(2);
+        } else if (profileId != 0 && isSelected(activity, profileId)) {
+            sliderBar.syncSelectedTab(3);
+        }
+    }
+
+    private static boolean isSelected(Activity activity, int id) {
+        View v = activity.findViewById(id);
+        return v != null && v.isSelected();
+    }
+
+    public static void launchCreation(Activity activity, String action) {
+        if (activity == null) return;
+        String pkg = activity.getPackageName();
+        Resources res = activity.getResources();
+
+        try {
+            if ("ai".equals(action)) {
+                // Open InstaEclipse options / AI customization
+                DialogUtils.showEclipseOptionsDialog(activity);
+                return;
+            }
+
+            // Try clicking native action bar creation buttons if visible
+            if ("post".equals(action)) {
+                int shareId = res.getIdentifier("share_tab", "id", pkg);
+                if (shareId != 0) {
+                    View v = activity.findViewById(shareId);
+                    if (v != null) { v.performClick(); return; }
+                }
+            }
+
+            // Try URI schemes
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            if ("reel".equals(action)) {
+                intent.setData(Uri.parse("instagram://reels_camera"));
+            } else if ("story".equals(action)) {
+                intent.setData(Uri.parse("instagram://story-camera"));
+            } else if ("live".equals(action)) {
+                intent.setData(Uri.parse("instagram://live_camera"));
+            } else {
+                intent.setData(Uri.parse("instagram://camera"));
+            }
+            intent.setPackage(pkg);
+            activity.startActivity(intent);
+        } catch (Throwable t) {
+            // Intent fallback to MediaCaptureActivity
+            try {
+                Intent fallback = new Intent();
+                fallback.setComponent(new ComponentName(pkg, "com.instagram.creation.activity.MediaCaptureActivity"));
+                fallback.setPackage(pkg);
+                activity.startActivity(fallback);
+            } catch (Throwable ignored) {
+                // Secondary fallback
+                try {
+                    int searchTabId = res.getIdentifier("search_tab", "id", pkg);
+                    if (searchTabId != 0) {
+                        View s = activity.findViewById(searchTabId);
+                        if (s != null) s.performClick();
+                    }
+                } catch (Throwable ignored2) {}
+            }
+        }
+    }
+
+    private static View findBottomNavBar(Activity activity) {
+        Resources res = activity.getResources();
+        String pkg = activity.getPackageName();
+
+        String[] possibleBarIds = {
+                "tab_bar", "tab_bar_container", "bottom_navigation_bar",
+                "main_tab_bar", "igds_tab_bar", "clips_tab_bar_background"
+        };
+        for (String idName : possibleBarIds) {
+            int id = res.getIdentifier(idName, "id", pkg);
+            if (id != 0) {
+                View v = activity.findViewById(id);
+                if (v != null) return v;
+            }
+        }
+
+        // Discover via child tabs
+        String[] tabIds = {"search_tab", "clips_tab", "feed_tab", "profile_tab", "news_tab", "direct_tab"};
+        for (String tabIdName : tabIds) {
+            int id = res.getIdentifier(tabIdName, "id", pkg);
+            if (id != 0) {
+                View tabView = activity.findViewById(id);
+                if (tabView != null && tabView.getParent() instanceof ViewGroup) {
+                    ViewGroup tabRow = (ViewGroup) tabView.getParent();
+                    if (tabRow.getParent() instanceof ViewGroup parentContainer) {
+                        int h = parentContainer.getHeight();
+                        int screenH = activity.getResources().getDisplayMetrics().heightPixels;
+                        int[] loc = new int[2];
+                        parentContainer.getLocationOnScreen(loc);
+                        if (loc[1] + h >= screenH - dpToPx(activity, 40) && h <= dpToPx(activity, 110) && h >= dpToPx(activity, 30)) {
+                            return parentContainer;
+                        }
+                    }
+                    return tabRow;
                 }
             }
         }
 
-        // 4. Style margins and outline according to selected glass style
-        boolean isFloating = (FeatureFlags.liquidGlassStyle != LiquidGlassDrawable.STYLE_DOCKED);
-        ViewGroup.LayoutParams lp = navBar.getLayoutParams();
-        if (lp instanceof ViewGroup.MarginLayoutParams mlp) {
-            int targetHMargin = isFloating ? dpToPx(activity, 14) : 0;
-            int targetBMargin = isFloating ? dpToPx(activity, 10) : 0;
-            if (mlp.leftMargin != targetHMargin || mlp.rightMargin != targetHMargin || mlp.bottomMargin != targetBMargin) {
-                mlp.leftMargin = targetHMargin;
-                mlp.rightMargin = targetHMargin;
-                mlp.bottomMargin = targetBMargin;
-                navBar.setLayoutParams(mlp);
-            }
-        }
-
-        float targetElevation = isFloating ? dpToPx(activity, 12) : dpToPx(activity, 6);
-        navBar.setElevation(targetElevation);
-
-        final boolean finalFloating = isFloating;
-        navBar.setOutlineProvider(new ViewOutlineProvider() {
-            @Override
-            public void getOutline(View view, Outline outline) {
-                int w = view.getWidth();
-                int h = view.getHeight();
-                if (w <= 0 || h <= 0) return;
-                if (finalFloating) {
-                    float radius = Math.min(h / 2f, dpToPx(activity, 28));
-                    outline.setRoundRect(0, 0, w, h, radius);
-                } else {
-                    float radius = dpToPx(activity, 22);
-                    outline.setRoundRect(0, 0, w, h + (int) radius, radius);
-                }
-            }
-        });
-        navBar.setClipToOutline(true);
-
-        navBar.setTag(R.id.tag_liquid_glass_applied, true);
+        return null;
     }
 
-    private static void restoreOriginal(Activity activity, View navBar) {
-        if (!Boolean.TRUE.equals(navBar.getTag(R.id.tag_liquid_glass_applied))) return;
-
-        OriginalNavBarState state = sOriginalStates.get(navBar);
-        if (state != null) {
-            navBar.setBackground(state.background);
-            ViewGroup.LayoutParams lp = navBar.getLayoutParams();
-            if (lp instanceof ViewGroup.MarginLayoutParams mlp) {
-                mlp.leftMargin = state.leftMargin;
-                mlp.rightMargin = state.rightMargin;
-                mlp.topMargin = state.topMargin;
-                mlp.bottomMargin = state.bottomMargin;
-                navBar.setLayoutParams(mlp);
-            }
-            navBar.setElevation(state.elevation);
-            navBar.setClipToOutline(state.clipToOutline);
-            navBar.setOutlineProvider(state.outlineProvider);
-        } else {
-            navBar.setBackground(null);
-        }
-        navBar.setTag(R.id.tag_liquid_glass_applied, null);
-    }
-
-    private static void hideDividers(Activity activity, View navBar) {
+    private static void hideDividers(Activity activity) {
         Resources res = activity.getResources();
         String pkg = activity.getPackageName();
         String[] dividerIds = {"tab_bar_shadow", "tab_bar_divider", "action_bar_shadow"};

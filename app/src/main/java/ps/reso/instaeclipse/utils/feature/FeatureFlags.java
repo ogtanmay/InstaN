@@ -94,9 +94,17 @@ public class FeatureFlags {
 
     // Liquid Glass Nav Bar
     public static boolean enableLiquidGlassNavBar = false;
-    public static int liquidGlassStyle = 0; // 0: Floating Pill, 1: Docked Glass, 2: Aurora Neon, 3: Obsidian Dark, 4: Crystal Clear
+    public static int liquidGlassStyle = 5; // 0: Floating Pill, 1: Docked Glass, 2: Aurora Neon, 3: Obsidian Dark, 4: Crystal Clear, 5: iOS 27 Liquid Glass
     public static boolean liquidGlassBorderSheen = true;
     public static int liquidGlassBlurRadius = 25;
+    public static int liquidGlassOpacity = 80; // 10 - 100%
+    public static int liquidGlassWidthMargin = 14; // dp side margin
+    public static int liquidGlassHeight = 56; // dp
+    public static int liquidGlassCornerRadius = 28; // dp
+    public static boolean liquidGlassShowFab = true;
+
+    // Liquid Glass Quick Actions (Post Long-Press Menu - iOS 27 Level)
+    public static boolean enableLiquidGlassQuickActions = true;
 
     // Clean Feed
     public static boolean hideSuggestionsInFeed = false;

@@ -236,7 +236,10 @@
     <!-- Liquid Glass Navigation Bar -->
     <string name="liquid_glass_nav_bar">Liquid Glass Nav Bar</string>
     <string name="liquid_glass_nav_bar_desc">Floating frosted glass dock with specular sheen on Instagram\'s navigation bar</string>
+    <string name="liquid_glass_nav_bar_subtitle">iOS 27 floating liquid glass dock with slider gesture and haptics</string>
+    <string name="liquid_glass_section_title">Liquid Glass Nav Bar (iOS 27)</string>
     <string name="liquid_glass_style">Glass Dock Style</string>
+    <string name="liquid_glass_style_ios27">iOS 27 Liquid Glass</string>
     <string name="liquid_glass_style_floating">Floating Glass Pill</string>
     <string name="liquid_glass_style_docked">Docked Frosted Glass</string>
     <string name="liquid_glass_style_aurora">Aurora Neon Glass</string>
@@ -244,6 +247,21 @@
     <string name="liquid_glass_style_crystal">Crystal Clear Glass</string>
     <string name="liquid_glass_border_sheen">Specular Rim Highlight</string>
     <string name="liquid_glass_blur">Frosted Glass Blur</string>
+    <string name="liquid_glass_quick_actions">Liquid Glass Quick Actions (iOS 27)</string>
+    <string name="liquid_glass_quick_actions_desc">Applies ultra-refractive frosted liquid glass with specular highlights to the long-press post action menu</string>
+    <string name="liquid_glass_customize_nav">Customize Nav Bar &amp; Live Preview…</string>
+    <string name="liquid_glass_opacity">Glass Opacity: %1$d%%</string>
+    <string name="liquid_glass_margin_width">Dock Margin: %1$ddp</string>
+    <string name="liquid_glass_height">Dock Height: %1$ddp</string>
+    <string name="liquid_glass_corner_radius">Corner Radius: %1$ddp</string>
+    <string name="liquid_glass_show_fab">Show \'+\' Creation Button</string>
+    <string name="liquid_glass_live_preview">Live Interactive Preview</string>
+    <string name="liquid_glass_preview_badge">LIVE PREVIEW</string>
+    <string name="liquid_glass_preview_tag">iOS 27 Fluid Glass</string>
+    <string name="liquid_glass_preview_hint">Interactive Preview • Tap tabs or drag slider</string>
+    <string name="liquid_glass_options_card_title">Dock Dimensions &amp; Styling</string>
+    <string name="liquid_glass_reset">Reset to Defaults</string>
+    <string name="liquid_glass_reset_confirm">Nav bar settings reset to iOS 27 defaults.</string>
 
     <!-- Location Spoof -->
     <string name="ig_dialog_location_spoof_enable">Spoof GPS Location</string>

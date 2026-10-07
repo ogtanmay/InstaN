@@ -992,6 +992,8 @@ public class FeaturesFragment extends Fragment {
         defs.add(Arrays.asList(
                 createSwitch(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_nav_bar), "enableLiquidGlassNavBar"),
                 createClickable(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_style) + ": " + getLiquidGlassStyleName(), this::pickLiquidGlassStyle),
+                createClickable(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_customize_nav), () ->
+                        themeCustomizerLauncher.launch(new Intent(requireContext(), ThemeCustomizerActivity.class))),
                 createSwitch(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_border_sheen), "liquidGlassBorderSheen")
         ));
 
@@ -1009,8 +1011,9 @@ public class FeaturesFragment extends Fragment {
     }
 
     private String getLiquidGlassStyleName() {
-        int style = localCache.getInt("liquidGlassStyle", 0);
+        int style = localCache.getInt("liquidGlassStyle", 5);
         switch (style) {
+            case 5: return getString(R.string.liquid_glass_style_ios27);
             case 1: return getString(R.string.liquid_glass_style_docked);
             case 2: return getString(R.string.liquid_glass_style_aurora);
             case 3: return getString(R.string.liquid_glass_style_obsidian);
@@ -1022,25 +1025,35 @@ public class FeaturesFragment extends Fragment {
 
     private void pickLiquidGlassStyle() {
         String[] labels = {
+                getString(R.string.liquid_glass_style_ios27),
                 getString(R.string.liquid_glass_style_floating),
                 getString(R.string.liquid_glass_style_docked),
                 getString(R.string.liquid_glass_style_aurora),
                 getString(R.string.liquid_glass_style_obsidian),
                 getString(R.string.liquid_glass_style_crystal)
         };
-        int current = localCache.getInt("liquidGlassStyle", 0);
+        final int[] values = { 5, 0, 1, 2, 3, 4 };
+        int current = localCache.getInt("liquidGlassStyle", 5);
+        int selectedIndex = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == current) {
+                selectedIndex = i;
+                break;
+            }
+        }
 
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(getString(R.string.liquid_glass_style))
-                .setSingleChoiceItems(labels, current, (dialog, which) -> {
+                .setSingleChoiceItems(labels, selectedIndex, (dialog, which) -> {
+                    int chosen = values[which];
                     SharedPreferences.Editor ed = localCache.edit();
-                    ed.putInt("liquidGlassStyle", which);
+                    ed.putInt("liquidGlassStyle", chosen);
                     ed.commit();
                     makeLocalCacheWorldReadable();
 
                     Intent b = new Intent("ps.reso.instaeclipse.ACTION_UPDATE_PREF_INT");
                     b.putExtra("key", "liquidGlassStyle");
-                    b.putExtra("value", which);
+                    b.putExtra("value", chosen);
                     requireContext().sendBroadcast(b);
 
                     dialog.dismiss();

@@ -120,6 +120,12 @@ public class SettingsManager {
         editor.putInt("liquidGlassStyle", FeatureFlags.liquidGlassStyle);
         editor.putBoolean("liquidGlassBorderSheen", FeatureFlags.liquidGlassBorderSheen);
         editor.putInt("liquidGlassBlurRadius", FeatureFlags.liquidGlassBlurRadius);
+        editor.putInt("liquidGlassOpacity", FeatureFlags.liquidGlassOpacity);
+        editor.putInt("liquidGlassWidthMargin", FeatureFlags.liquidGlassWidthMargin);
+        editor.putInt("liquidGlassHeight", FeatureFlags.liquidGlassHeight);
+        editor.putInt("liquidGlassCornerRadius", FeatureFlags.liquidGlassCornerRadius);
+        editor.putBoolean("liquidGlassShowFab", FeatureFlags.liquidGlassShowFab);
+        editor.putBoolean("enableLiquidGlassQuickActions", FeatureFlags.enableLiquidGlassQuickActions);
 
         editor.apply();
 
@@ -229,9 +235,15 @@ public class SettingsManager {
 
         // Liquid Glass Nav Bar
         FeatureFlags.enableLiquidGlassNavBar = prefs.getBoolean("enableLiquidGlassNavBar", false);
-        FeatureFlags.liquidGlassStyle = prefs.getInt("liquidGlassStyle", 0);
+        FeatureFlags.liquidGlassStyle = prefs.getInt("liquidGlassStyle", 5);
         FeatureFlags.liquidGlassBorderSheen = prefs.getBoolean("liquidGlassBorderSheen", true);
         FeatureFlags.liquidGlassBlurRadius = prefs.getInt("liquidGlassBlurRadius", 25);
+        FeatureFlags.liquidGlassOpacity = prefs.getInt("liquidGlassOpacity", 80);
+        FeatureFlags.liquidGlassWidthMargin = prefs.getInt("liquidGlassWidthMargin", 14);
+        FeatureFlags.liquidGlassHeight = prefs.getInt("liquidGlassHeight", 56);
+        FeatureFlags.liquidGlassCornerRadius = prefs.getInt("liquidGlassCornerRadius", 28);
+        FeatureFlags.liquidGlassShowFab = prefs.getBoolean("liquidGlassShowFab", true);
+        FeatureFlags.enableLiquidGlassQuickActions = prefs.getBoolean("enableLiquidGlassQuickActions", true);
 
         FeatureManager.refreshFeatureStatus();
     }

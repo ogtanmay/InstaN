@@ -527,6 +527,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                     SettingsManager.loadAllFlags(ctx);
                     IgThemeEngine.invalidate();
                     IgThemeHook.refreshCurrentActivity();
+                    ps.reso.instaeclipse.mods.ui.LiquidGlassNavBarHook.refreshCurrentActivity();
 
                 } else if ("ps.reso.instaeclipse.ACTION_UPDATE_PREF_INT".equals(action)) {
                     String key = intent.getStringExtra("key");

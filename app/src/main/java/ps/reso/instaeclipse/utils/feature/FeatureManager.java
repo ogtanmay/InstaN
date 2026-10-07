@@ -165,6 +165,12 @@ public class FeatureManager {
             FeatureStatusTracker.setDisabled("LiquidGlassNavBar");
         }
 
+        if (FeatureFlags.enableLiquidGlassQuickActions) {
+            FeatureStatusTracker.setEnabled("LiquidGlassQuickActions", R.string.liquid_glass_quick_actions);
+        } else {
+            FeatureStatusTracker.setDisabled("LiquidGlassQuickActions");
+        }
+
         if (FeatureFlags.removeBuildExpiredPopup) {
             FeatureStatusTracker.setEnabled("RemoveBuildExpiredPopup", R.string.ig_dialog_dev_remove_build_expired);
         } else {
