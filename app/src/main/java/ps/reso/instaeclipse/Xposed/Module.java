@@ -368,6 +368,13 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                         ModuleLog.line("(InstaEclipse | Theme): ❌ Failed to hook");
                     }
 
+                    // Liquid Glass Navigation Bar
+                    try {
+                        new ps.reso.instaeclipse.mods.ui.LiquidGlassNavBarHook().install(hostClassLoader);
+                    } catch (Throwable ignored) {
+                        ModuleLog.line("(InstaEclipse | LiquidGlass): ❌ Failed to hook");
+                    }
+
                     // Force Reel Quality
                     try {
                         new ForceReelQualityHook().install(dexKitBridge, lpparam.classLoader);
@@ -506,6 +513,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                     FeatureManager.refreshFeatureStatus();
                     IgThemeEngine.invalidate();
                     IgThemeHook.refreshCurrentActivity();
+                    ps.reso.instaeclipse.mods.ui.LiquidGlassNavBarHook.refreshCurrentActivity();
 
                 } else if ("ps.reso.instaeclipse.ACTION_UPDATE_PREF_STRING".equals(action)) {
                     String key = intent.getStringExtra("key");
@@ -533,6 +541,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                     FeatureManager.refreshFeatureStatus();
                     IgThemeEngine.invalidate();
                     IgThemeHook.refreshCurrentActivity();
+                    ps.reso.instaeclipse.mods.ui.LiquidGlassNavBarHook.refreshCurrentActivity();
 
                 } else if (CommonUtils.ACTION_REQUEST_LOGS.equals(action)) {
                     try {

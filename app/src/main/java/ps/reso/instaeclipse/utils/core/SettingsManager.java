@@ -115,6 +115,12 @@ public class SettingsManager {
         editor.putInt("themePresetId", FeatureFlags.themePresetId);
         editor.putString("themePaletteJson", FeatureFlags.themePaletteJson);
 
+        // Liquid Glass Nav Bar
+        editor.putBoolean("enableLiquidGlassNavBar", FeatureFlags.enableLiquidGlassNavBar);
+        editor.putInt("liquidGlassStyle", FeatureFlags.liquidGlassStyle);
+        editor.putBoolean("liquidGlassBorderSheen", FeatureFlags.liquidGlassBorderSheen);
+        editor.putInt("liquidGlassBlurRadius", FeatureFlags.liquidGlassBlurRadius);
+
         editor.apply();
 
         FeatureManager.refreshFeatureStatus();
@@ -220,6 +226,12 @@ public class SettingsManager {
         FeatureFlags.customThemeEnabled = prefs.getBoolean("customThemeEnabled", false);
         FeatureFlags.themePresetId = prefs.getInt("themePresetId", 1);
         FeatureFlags.themePaletteJson = prefs.getString("themePaletteJson", "");
+
+        // Liquid Glass Nav Bar
+        FeatureFlags.enableLiquidGlassNavBar = prefs.getBoolean("enableLiquidGlassNavBar", false);
+        FeatureFlags.liquidGlassStyle = prefs.getInt("liquidGlassStyle", 0);
+        FeatureFlags.liquidGlassBorderSheen = prefs.getBoolean("liquidGlassBorderSheen", true);
+        FeatureFlags.liquidGlassBlurRadius = prefs.getInt("liquidGlassBlurRadius", 25);
 
         FeatureManager.refreshFeatureStatus();
     }

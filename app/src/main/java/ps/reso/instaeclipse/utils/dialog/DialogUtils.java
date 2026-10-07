@@ -1556,6 +1556,34 @@ public class DialogUtils {
         layout.addView(sectionHeader(context, I18n.t(context, R.string.theme_section_colors)));
         layout.addView(colorsCard);
 
+        // ---- Liquid Glass Nav Bar ----
+        LinearLayout glassCard = card(context);
+        ToggleRow glassSwitch = createSwitch(context, R.drawable.ic_sparkle, "#00C7BE",
+                I18n.t(context, R.string.liquid_glass_nav_bar), FeatureFlags.enableLiquidGlassNavBar);
+        glassSwitch.setOnCheckedChangeListener((b, checked) -> {
+            FeatureFlags.enableLiquidGlassNavBar = checked;
+            SettingsManager.saveAllFlags();
+            ps.reso.instaeclipse.mods.ui.LiquidGlassNavBarHook.refreshCurrentActivity();
+        });
+        glassCard.addView(glassSwitch);
+
+        glassCard.addView(createActionRow(context, R.drawable.ic_sparkle,
+                I18n.t(context, R.string.liquid_glass_style) + ": " + getLiquidGlassStyleName(context), "#00C7BE", v -> {
+                    showLiquidGlassStylePicker(context);
+                }));
+
+        ToggleRow sheenSwitch = createSwitch(context, R.drawable.ic_sparkle, "#00C7BE",
+                I18n.t(context, R.string.liquid_glass_border_sheen), FeatureFlags.liquidGlassBorderSheen);
+        sheenSwitch.setOnCheckedChangeListener((b, checked) -> {
+            FeatureFlags.liquidGlassBorderSheen = checked;
+            SettingsManager.saveAllFlags();
+            ps.reso.instaeclipse.mods.ui.LiquidGlassNavBarHook.refreshCurrentActivity();
+        });
+        glassCard.addView(sheenSwitch);
+
+        layout.addView(sectionHeader(context, I18n.t(context, R.string.liquid_glass_nav_bar)));
+        layout.addView(glassCard);
+
         // ---- Fonts & Emoji ----
         // Custom Font + Custom Emoji now live under Custom Theme (moved out of Misc). Both apply on
         // the next Instagram start (Typeface cache). Emoji uses the font-fallback method, so any
@@ -1565,6 +1593,38 @@ public class DialogUtils {
 
         showSectionDialog(context, I18n.t(context, R.string.theme_title), layout, () -> {
         });
+    }
+
+    private static String getLiquidGlassStyleName(Context context) {
+        switch (FeatureFlags.liquidGlassStyle) {
+            case 1: return I18n.t(context, R.string.liquid_glass_style_docked);
+            case 2: return I18n.t(context, R.string.liquid_glass_style_aurora);
+            case 3: return I18n.t(context, R.string.liquid_glass_style_obsidian);
+            case 4: return I18n.t(context, R.string.liquid_glass_style_crystal);
+            case 0:
+            default: return I18n.t(context, R.string.liquid_glass_style_floating);
+        }
+    }
+
+    private static void showLiquidGlassStylePicker(Context context) {
+        String[] labels = {
+                I18n.t(context, R.string.liquid_glass_style_floating),
+                I18n.t(context, R.string.liquid_glass_style_docked),
+                I18n.t(context, R.string.liquid_glass_style_aurora),
+                I18n.t(context, R.string.liquid_glass_style_obsidian),
+                I18n.t(context, R.string.liquid_glass_style_crystal)
+        };
+        new AlertDialog.Builder(context)
+                .setTitle(I18n.t(context, R.string.liquid_glass_style))
+                .setSingleChoiceItems(labels, FeatureFlags.liquidGlassStyle, (dialog, which) -> {
+                    FeatureFlags.liquidGlassStyle = which;
+                    SettingsManager.saveAllFlags();
+                    ps.reso.instaeclipse.mods.ui.LiquidGlassNavBarHook.refreshCurrentActivity();
+                    dialog.dismiss();
+                    showThemeOptions(context);
+                })
+                .setNegativeButton(I18n.t(context, R.string.ig_dialog_cancel), null)
+                .show();
     }
 
     /** Grouped card: Custom Font (toggle + picker) and Custom Emoji (toggle + picker). Shared by the

@@ -92,6 +92,12 @@ public class FeatureFlags {
     public static int themePresetId = 1;
     public static String themePaletteJson = "";
 
+    // Liquid Glass Nav Bar
+    public static boolean enableLiquidGlassNavBar = false;
+    public static int liquidGlassStyle = 0; // 0: Floating Pill, 1: Docked Glass, 2: Aurora Neon, 3: Obsidian Dark, 4: Crystal Clear
+    public static boolean liquidGlassBorderSheen = true;
+    public static int liquidGlassBlurRadius = 25;
+
     // Clean Feed
     public static boolean hideSuggestionsInFeed = false;
     public static boolean hideThreadsSuggestions = false;

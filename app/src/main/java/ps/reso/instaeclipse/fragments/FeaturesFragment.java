@@ -987,6 +987,14 @@ public class FeaturesFragment extends Fragment {
                         themeCustomizerLauncher.launch(new Intent(requireContext(), ThemeCustomizerActivity.class)))
         ));
 
+        // Liquid Glass Navigation Bar
+        defs.add(getString(R.string.liquid_glass_nav_bar));
+        defs.add(Arrays.asList(
+                createSwitch(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_nav_bar), "enableLiquidGlassNavBar"),
+                createClickable(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_style) + ": " + getLiquidGlassStyleName(), this::pickLiquidGlassStyle),
+                createSwitch(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_border_sheen), "liquidGlassBorderSheen")
+        ));
+
         // Fonts & Emoji now live under Custom Theme (mirrors the in-IG dialog). File pickers run
         // inside Instagram; here the companion app only toggles the flags.
         defs.add(getString(R.string.theme_section_fonts));
@@ -998,6 +1006,48 @@ public class FeaturesFragment extends Fragment {
 
         showMenu(getString(R.string.theme_title), defs);
         currentMenu = "theme";
+    }
+
+    private String getLiquidGlassStyleName() {
+        int style = localCache.getInt("liquidGlassStyle", 0);
+        switch (style) {
+            case 1: return getString(R.string.liquid_glass_style_docked);
+            case 2: return getString(R.string.liquid_glass_style_aurora);
+            case 3: return getString(R.string.liquid_glass_style_obsidian);
+            case 4: return getString(R.string.liquid_glass_style_crystal);
+            case 0:
+            default: return getString(R.string.liquid_glass_style_floating);
+        }
+    }
+
+    private void pickLiquidGlassStyle() {
+        String[] labels = {
+                getString(R.string.liquid_glass_style_floating),
+                getString(R.string.liquid_glass_style_docked),
+                getString(R.string.liquid_glass_style_aurora),
+                getString(R.string.liquid_glass_style_obsidian),
+                getString(R.string.liquid_glass_style_crystal)
+        };
+        int current = localCache.getInt("liquidGlassStyle", 0);
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(getString(R.string.liquid_glass_style))
+                .setSingleChoiceItems(labels, current, (dialog, which) -> {
+                    SharedPreferences.Editor ed = localCache.edit();
+                    ed.putInt("liquidGlassStyle", which);
+                    ed.commit();
+                    makeLocalCacheWorldReadable();
+
+                    Intent b = new Intent("ps.reso.instaeclipse.ACTION_UPDATE_PREF_INT");
+                    b.putExtra("key", "liquidGlassStyle");
+                    b.putExtra("value", which);
+                    requireContext().sendBroadcast(b);
+
+                    dialog.dismiss();
+                    loadThemeMenu();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private String qualityLabel(int h) {

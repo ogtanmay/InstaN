@@ -233,6 +233,18 @@
     <string name="theme_slot_destructive">Destructive</string>
     <string name="ig_dialog_quality_max">Max Available</string>
 
+    <!-- Liquid Glass Navigation Bar -->
+    <string name="liquid_glass_nav_bar">Liquid Glass Nav Bar</string>
+    <string name="liquid_glass_nav_bar_desc">Floating frosted glass dock with specular sheen on Instagram\'s navigation bar</string>
+    <string name="liquid_glass_style">Glass Dock Style</string>
+    <string name="liquid_glass_style_floating">Floating Glass Pill</string>
+    <string name="liquid_glass_style_docked">Docked Frosted Glass</string>
+    <string name="liquid_glass_style_aurora">Aurora Neon Glass</string>
+    <string name="liquid_glass_style_obsidian">Obsidian Dark Glass</string>
+    <string name="liquid_glass_style_crystal">Crystal Clear Glass</string>
+    <string name="liquid_glass_border_sheen">Specular Rim Highlight</string>
+    <string name="liquid_glass_blur">Frosted Glass Blur</string>
+
     <!-- Location Spoof -->
     <string name="ig_dialog_location_spoof_enable">Spoof GPS Location</string>
     <string name="ig_dialog_location_pick">Pick Location on Map</string>

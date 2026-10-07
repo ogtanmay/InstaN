@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="tag_module_dialog_root" type="id" />
+    <item name="tag_liquid_glass_applied" type="id" />
+    <item name="tag_liquid_glass_orig_bg" type="id" />
 </resources>

@@ -1,0 +1,6 @@
+{
+  "name": "InstaEclipse",
+  "description": "Customization and utility module for Instagram featuring theme options, navigation styling, ghost mode, and tools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
