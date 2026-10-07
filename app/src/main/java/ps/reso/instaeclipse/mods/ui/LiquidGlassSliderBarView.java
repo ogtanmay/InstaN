@@ -19,7 +19,9 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
 import android.view.animation.DecelerateInterpolator;
@@ -59,6 +61,61 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         void onCreateAction(String action);
     }
 
+    public static class SlideablePillLayout extends FrameLayout {
+        private float downX = 0f;
+        private float downY = 0f;
+        private boolean isDragging = false;
+        private final int touchSlop;
+        private LiquidGlassSliderBarView host;
+
+        public SlideablePillLayout(@NonNull Context context) {
+            super(context);
+            touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+        }
+
+        public void setHost(LiquidGlassSliderBarView host) {
+            this.host = host;
+        }
+
+        @Override
+        public boolean onInterceptTouchEvent(MotionEvent ev) {
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    downX = ev.getX();
+                    downY = ev.getY();
+                    isDragging = false;
+                    if (host != null) {
+                        host.onPillTouchDown(ev.getX(), ev.getY());
+                    }
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    float dx = Math.abs(ev.getX() - downX);
+                    float dy = Math.abs(ev.getY() - downY);
+                    if (dx > touchSlop && dx > dy) {
+                        isDragging = true;
+                        if (getParent() != null) {
+                            getParent().requestDisallowInterceptTouchEvent(true);
+                        }
+                        return true;
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    isDragging = false;
+                    break;
+            }
+            return isDragging;
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent ev) {
+            if (host != null) {
+                return host.handlePillTouchEvent(ev);
+            }
+            return super.onTouchEvent(ev);
+        }
+    }
+
     private LinearLayout bottomRow;
     private FrameLayout tabsPill;
     private LiquidGlassDrawable tabsPillDrawable;
@@ -83,6 +140,7 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     private float touchDownX = 0f;
     private float touchDownY = 0f;
     private int lastHapticIndex = 0;
+    private VelocityTracker velocityTracker;
 
     public LiquidGlassSliderBarView(@NonNull Context context) {
         super(context);
@@ -140,7 +198,9 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         bottomRow.setLayoutParams(rowLp);
 
         // 2A. Liquid Glass Tabs Pill
-        tabsPill = new FrameLayout(context);
+        SlideablePillLayout pillLayout = new SlideablePillLayout(context);
+        pillLayout.setHost(this);
+        tabsPill = pillLayout;
         LinearLayout.LayoutParams pillLp = new LinearLayout.LayoutParams(0, barHeight, 1.0f);
         pillLp.rightMargin = FeatureFlags.liquidGlassShowFab ? dp(10) : 0;
         tabsPill.setLayoutParams(pillLp);
@@ -540,6 +600,13 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         });
     }
 
+    public void onPillTouchDown(float x, float y) {
+        touchDownX = x;
+        touchDownY = y;
+        isDraggingSlider = false;
+        lastHapticIndex = selectedIndex;
+    }
+
     private boolean handlePillTouchEvent(MotionEvent event) {
         int totalW = tabsPill.getWidth();
         if (totalW <= 0) return false;
@@ -569,6 +636,13 @@ public class LiquidGlassSliderBarView extends FrameLayout {
                     if (hoveredIndex != lastHapticIndex) {
                         lastHapticIndex = hoveredIndex;
                         triggerHapticFeedback();
+                        // Dynamically update tab icon visual states during slide
+                        for (int k = 0; k < 4; k++) {
+                            boolean isHovered = (k == hoveredIndex);
+                            tabIconViews[k].setColorFilter(isHovered ? 0xFFFFFFFF : 0x90FFFFFF);
+                            tabIconViews[k].setScaleX(isHovered ? 1.15f : 1.0f);
+                            tabIconViews[k].setScaleY(isHovered ? 1.15f : 1.0f);
+                        }
                     }
                 }
                 return true;
