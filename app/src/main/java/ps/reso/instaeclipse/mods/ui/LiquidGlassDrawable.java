@@ -206,35 +206,35 @@ public class LiquidGlassDrawable extends Drawable {
                 break;
 
             case STYLE_IOS27_LIQUID:
-                // Ultra-futuristic iOS 27 Liquid Glass with prismatic chromatic dispersion and fluid caustics
+                // Ultra-futuristic iOS 27 Liquid Glass with crystal optical translucency and chromatic dispersion
                 if (dark) {
                     bodyColors = new int[]{
-                            0x66334155, // Frosted ultra-translucent sapphire slate
-                            0x3E1E293B, // Mid-depth fluid glass refraction
-                            0x340F172A, // Deep inner volume refraction
-                            0x4E1E1B4B  // Subtle chromatic iridescent bottom base
+                            0x341E293B, // Ultra-translucent crystal sapphire slate (20% opacity)
+                            0x1E0F172A, // Mid-depth fluid glass refraction (12% opacity)
+                            0x14020617, // Deep inner volume refraction (8% opacity)
+                            0x261E1B4B  // Subtle chromatic iridescent bottom base (15% opacity)
                     };
                     bodyPositions = new float[]{0.0f, 0.35f, 0.70f, 1.0f};
                     strokeColors = new int[]{
-                            0xFAFFFFFF, // Diamond apex specular point
-                            0xBDC4B5FD, // Prismatic violet-lavender dispersion
+                            0xFAFFFFFF, // Pure diamond apex specular point (98% white)
+                            0xB8C4B5FD, // Prismatic violet-lavender dispersion
                             0x8538BDF8, // Refractive cyan caustic highlight
                             0x7E818CF8  // Subsurface ambient rim
                     };
                     strokePositions = new float[]{0.0f, 0.28f, 0.65f, 1.0f};
                 } else {
                     bodyColors = new int[]{
-                            0xB5FFFFFF, // Pure crystalline frost
-                            0x8DF8FAFC, // Liquid reflection layer
-                            0x7AE2E8F0, // Translucent mineral glass
-                            0x9AF1F5F9  // Ambient fluid beam
+                            0x3CFFFFFF, // Pure crystal fluid glass (23% opacity - crystal clear!)
+                            0x22F8FAFC, // Liquid water reflection (13% opacity)
+                            0x1AE2E8F0, // Translucent optical glass (10% opacity)
+                            0x26E0E7FF  // Delicate sky-violet refraction base (15% opacity)
                     };
                     bodyPositions = new float[]{0.0f, 0.35f, 0.70f, 1.0f};
                     strokeColors = new int[]{
-                            0xFAFFFFFF, // Diamond apex specular reflection
+                            0xFAFFFFFF, // Diamond apex specular reflection (98% white)
                             0xB8E0E7FF, // Prismatic sky-indigo dispersion
-                            0x9038BDF8, // Caustic light refraction
-                            0x98A5B4FC  // Delicate iridescent edge
+                            0x8538BDF8, // Caustic light refraction
+                            0x88A5B4FC  // Delicate iridescent edge
                     };
                     strokePositions = new float[]{0.0f, 0.28f, 0.65f, 1.0f};
                 }

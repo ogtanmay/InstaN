@@ -129,9 +129,6 @@ public class LiquidGlassNavBarHook {
             // Tab click handling
             sliderBar.setOnTabSelectedListener(index -> clickNativeTab(activity, index));
 
-            // Create popup action handling
-            sliderBar.setOnCreateActionSelectedListener(action -> launchCreation(activity, action));
-
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
@@ -142,7 +139,6 @@ public class LiquidGlassNavBarHook {
             existing = sliderBar;
         } else {
             existing.bringToFront();
-            existing.setLayout(FeatureFlags.liquidGlassNavLayout);
             existing.applyConfiguration(
                     FeatureFlags.liquidGlassStyle,
                     FeatureFlags.liquidGlassOpacity,
@@ -150,7 +146,7 @@ public class LiquidGlassNavBarHook {
                     FeatureFlags.liquidGlassHeight,
                     FeatureFlags.liquidGlassCornerRadius,
                     FeatureFlags.liquidGlassBorderSheen,
-                    FeatureFlags.liquidGlassShowFab
+                    false
             );
         }
 
@@ -175,51 +171,25 @@ public class LiquidGlassNavBarHook {
         Resources res = activity.getResources();
         String pkg = activity.getPackageName();
         int tabId = 0;
-        int layout = FeatureFlags.liquidGlassNavLayout;
 
-        if (layout == LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE) {
-            // [0] Home, [1] Direct, [2] Create (+), [3] Heart, [4] Profile
-            switch (index) {
-                case 0: // Home
-                    clickFirstMatching(activity, "feed_tab", "home_tab");
-                    break;
-                case 1: // Direct / Messages
-                    tabId = res.getIdentifier("direct_tab", "id", pkg);
-                    if (tabId != 0 && activity.findViewById(tabId) != null) {
-                        activity.findViewById(tabId).performClick();
-                    } else {
-                        clickFirstMatching(activity, "action_bar_inbox_button", "inbox_button", "direct_tab");
-                    }
-                    break;
-                case 2: // Center Create (+)
-                    launchCreation(activity, "camera");
-                    break;
-                case 3: // Heart / Activity
-                    clickFirstMatching(activity, "news_tab", "notification_tab", "activity_tab");
-                    break;
-                case 4: // Profile
-                    clickFirstMatching(activity, "profile_tab", "user_tab");
-                    break;
-            }
-        } else {
-            // [0] Home, [1] Reels, [2] Direct, [3] Search, [4] Profile
-            switch (index) {
-                case 0: // Home
-                    clickFirstMatching(activity, "feed_tab", "home_tab");
-                    break;
-                case 1: // Reels
-                    clickFirstMatching(activity, "clips_tab");
-                    break;
-                case 2: // Direct
-                    clickFirstMatching(activity, "direct_tab", "action_bar_inbox_button");
-                    break;
-                case 3: // Search
-                    clickFirstMatching(activity, "search_tab", "explore_tab");
-                    break;
-                case 4: // Profile
-                    clickFirstMatching(activity, "profile_tab", "user_tab");
-                    break;
-            }
+        switch (index) {
+            case LiquidGlassSliderBarView.TAB_HOME: // 0: Home
+                clickFirstMatching(activity, "feed_tab", "home_tab");
+                break;
+            case LiquidGlassSliderBarView.TAB_REELS: // 1: Reels
+                clickFirstMatching(activity, "clips_tab");
+                break;
+            case LiquidGlassSliderBarView.TAB_MESSAGES: // 2: Messages / Direct
+                tabId = res.getIdentifier("direct_tab", "id", pkg);
+                if (tabId != 0 && activity.findViewById(tabId) != null) {
+                    activity.findViewById(tabId).performClick();
+                } else {
+                    clickFirstMatching(activity, "action_bar_inbox_button", "inbox_button", "direct_tab");
+                }
+                break;
+            case LiquidGlassSliderBarView.TAB_PROFILE: // 3: Profile
+                clickFirstMatching(activity, "profile_tab", "user_tab");
+                break;
         }
     }
 
@@ -241,33 +211,20 @@ public class LiquidGlassNavBarHook {
     private static void syncWithNativeTab(Activity activity, LiquidGlassSliderBarView sliderBar) {
         Resources res = activity.getResources();
         String pkg = activity.getPackageName();
-        int layout = FeatureFlags.liquidGlassNavLayout;
 
         int feedId = res.getIdentifier("feed_tab", "id", pkg);
         int clipsId = res.getIdentifier("clips_tab", "id", pkg);
-        int searchId = res.getIdentifier("search_tab", "id", pkg);
         int directId = res.getIdentifier("direct_tab", "id", pkg);
-        int newsId = res.getIdentifier("news_tab", "id", pkg);
         int profileId = res.getIdentifier("profile_tab", "id", pkg);
 
         if (feedId != 0 && isSelected(activity, feedId)) {
-            sliderBar.syncSelectedTab(0);
+            sliderBar.syncSelectedTab(LiquidGlassSliderBarView.TAB_HOME);
         } else if (clipsId != 0 && isSelected(activity, clipsId)) {
-            if (layout == LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH) {
-                sliderBar.syncSelectedTab(1);
-            }
-        } else if (searchId != 0 && isSelected(activity, searchId)) {
-            if (layout == LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH) {
-                sliderBar.syncSelectedTab(3);
-            }
+            sliderBar.syncSelectedTab(LiquidGlassSliderBarView.TAB_REELS);
         } else if (directId != 0 && isSelected(activity, directId)) {
-            sliderBar.syncSelectedTab(layout == LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE ? 1 : 2);
-        } else if (newsId != 0 && isSelected(activity, newsId)) {
-            if (layout == LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE) {
-                sliderBar.syncSelectedTab(3);
-            }
+            sliderBar.syncSelectedTab(LiquidGlassSliderBarView.TAB_MESSAGES);
         } else if (profileId != 0 && isSelected(activity, profileId)) {
-            sliderBar.syncSelectedTab(4);
+            sliderBar.syncSelectedTab(LiquidGlassSliderBarView.TAB_PROFILE);
         }
     }
 

@@ -78,8 +78,6 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
     private ImageView navPreviewBgImage;
     private View navPreviewWpPastel;
     private View navPreviewWpOcean;
-    private View navLayoutCard;
-    private TextView navLayoutText;
     private View navStyleCard;
     private TextView navStyleText;
     private TextView navOpacityLabel;
@@ -92,8 +90,6 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
     private SeekBar navRadiusSlider;
     private MaterialSwitch navSheenSwitch;
     private MaterialSwitch navChromaticSwitch;
-    private MaterialSwitch navFabSwitch;
-    private MaterialSwitch navQuickActionsSwitch;
     private MaterialButton navResetButton;
 
     private View presetsContent;
@@ -191,8 +187,6 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         navPreviewBgImage = findViewById(R.id.theme_nav_preview_bg_image);
         navPreviewWpPastel = findViewById(R.id.theme_nav_preview_wp_pastel);
         navPreviewWpOcean = findViewById(R.id.theme_nav_preview_wp_ocean);
-        navLayoutCard = findViewById(R.id.theme_nav_layout_card);
-        navLayoutText = findViewById(R.id.theme_nav_layout_text);
         navStyleCard = findViewById(R.id.theme_nav_style_card);
         navStyleText = findViewById(R.id.theme_nav_style_text);
         navOpacityLabel = findViewById(R.id.theme_nav_opacity_label);
@@ -205,8 +199,6 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         navRadiusSlider = findViewById(R.id.theme_nav_radius_slider);
         navSheenSwitch = findViewById(R.id.theme_nav_sheen_switch);
         navChromaticSwitch = findViewById(R.id.theme_nav_chromatic_switch);
-        navFabSwitch = findViewById(R.id.theme_nav_fab_switch);
-        navQuickActionsSwitch = findViewById(R.id.theme_nav_quick_actions_switch);
         navResetButton = findViewById(R.id.theme_nav_reset);
 
         // Load values
@@ -247,10 +239,6 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
                     navPreviewBgImage.setImageResource(R.drawable.preview_ocean_bg);
                 }
             });
-        }
-
-        if (navLayoutCard != null) {
-            navLayoutCard.setOnClickListener(v -> showNavLayoutPicker());
         }
 
         if (navStyleCard != null) {
@@ -352,21 +340,6 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
             });
         }
 
-        navFabSwitch.setChecked(navFab);
-        navFabSwitch.setOnCheckedChangeListener((bv, isChecked) -> {
-            navFab = isChecked;
-            FeatureFlags.liquidGlassShowFab = isChecked;
-            persistNavBoolean(KEY_NAV_FAB, isChecked);
-            updateNavPreview();
-        });
-
-        navQuickActionsSwitch.setChecked(navQuickActions);
-        navQuickActionsSwitch.setOnCheckedChangeListener((bv, isChecked) -> {
-            navQuickActions = isChecked;
-            FeatureFlags.enableLiquidGlassQuickActions = isChecked;
-            persistNavBoolean(KEY_NAV_QUICK_ACTIONS, isChecked);
-        });
-
         // Reset
         navResetButton.setOnClickListener(v -> resetNavDefaults());
 
@@ -399,12 +372,8 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
 
     private void updateNavPreview() {
         if (navPreviewSlider != null) {
-            navPreviewSlider.setLayout(navLayout);
-            navPreviewSlider.applyConfiguration(navStyle, navOpacity, navMargin, navHeight, navRadius, navSheen, navFab);
+            navPreviewSlider.applyConfiguration(navStyle, navOpacity, navMargin, navHeight, navRadius, navSheen, false);
             navPreviewSlider.setThemePalette(activePalette());
-        }
-        if (navLayoutText != null) {
-            navLayoutText.setText(getNavLayoutName(navLayout));
         }
         if (navStyleText != null) {
             navStyleText.setText(getNavStyleName(navStyle));
@@ -412,34 +381,6 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         if (navPreviewTag != null) {
             navPreviewTag.setText(getNavStyleName(navStyle));
         }
-    }
-
-    private String getNavLayoutName(int layout) {
-        if (layout == LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH) {
-            return getString(R.string.liquid_glass_layout_reels_search);
-        }
-        return getString(R.string.liquid_glass_layout_center_create);
-    }
-
-    private void showNavLayoutPicker() {
-        String[] labels = {
-                getString(R.string.liquid_glass_layout_center_create),
-                getString(R.string.liquid_glass_layout_reels_search)
-        };
-        final int[] values = { LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE, LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH };
-        int currentIndex = (navLayout == LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH) ? 1 : 0;
-
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.liquid_glass_layout)
-                .setSingleChoiceItems(labels, currentIndex, (dialog, which) -> {
-                    navLayout = values[which];
-                    FeatureFlags.liquidGlassNavLayout = navLayout;
-                    persistNavInt(KEY_NAV_LAYOUT, navLayout);
-                    updateNavPreview();
-                    dialog.dismiss();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
     }
 
     private String getNavStyleName(int style) {
@@ -539,8 +480,6 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         navRadiusSlider.setProgress(navRadius - 14);
         navSheenSwitch.setChecked(navSheen);
         if (navChromaticSwitch != null) navChromaticSwitch.setChecked(navChromatic);
-        navFabSwitch.setChecked(navFab);
-        navQuickActionsSwitch.setChecked(navQuickActions);
 
         updateOpacityLabel();
         updateMarginLabel();

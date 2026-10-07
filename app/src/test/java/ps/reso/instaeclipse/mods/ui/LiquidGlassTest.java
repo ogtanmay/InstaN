@@ -41,6 +41,11 @@ public class LiquidGlassTest {
         assertEquals(0, LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE);
         assertEquals(1, LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH);
 
+        assertEquals(0, LiquidGlassSliderBarView.TAB_HOME);
+        assertEquals(1, LiquidGlassSliderBarView.TAB_REELS);
+        assertEquals(2, LiquidGlassSliderBarView.TAB_MESSAGES);
+        assertEquals(3, LiquidGlassSliderBarView.TAB_PROFILE);
+
         FeatureFlags.liquidGlassNavLayout = LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE;
         FeatureFlags.liquidGlassChromaticLens = true;
         assertEquals(0, FeatureFlags.liquidGlassNavLayout);
