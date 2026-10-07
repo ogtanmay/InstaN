@@ -36,5 +36,14 @@ public class LiquidGlassTest {
         assertEquals(2, LiquidGlassDrawable.STYLE_AURORA);
         assertEquals(3, LiquidGlassDrawable.STYLE_OBSIDIAN);
         assertEquals(4, LiquidGlassDrawable.STYLE_CRYSTAL_CLEAR);
+        assertEquals(5, LiquidGlassDrawable.STYLE_IOS27_LIQUID);
+
+        assertEquals(0, LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE);
+        assertEquals(1, LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH);
+
+        FeatureFlags.liquidGlassNavLayout = LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE;
+        FeatureFlags.liquidGlassChromaticLens = true;
+        assertEquals(0, FeatureFlags.liquidGlassNavLayout);
+        assertTrue(FeatureFlags.liquidGlassChromaticLens);
     }
 }

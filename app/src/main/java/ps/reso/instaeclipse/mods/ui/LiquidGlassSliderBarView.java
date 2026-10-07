@@ -2,24 +2,16 @@ package ps.reso.instaeclipse.mods.ui;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Outline;
-import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.os.Build;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
-import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
@@ -33,25 +25,29 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import ps.reso.instaeclipse.R;
+import ps.reso.instaeclipse.mods.ui.theme.IgThemePalette;
 import ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader;
 import ps.reso.instaeclipse.utils.feature.FeatureFlags;
-import ps.reso.instaeclipse.utils.log.ModuleLog;
 
 /**
- * Liquid Glass Floating Slider Navigation Bar
+ * Liquid Glass Floating Slider Navigation Bar (iOS 27 Edition)
  *
- * Implements the iOS 18 / VisionOS inspired floating liquid glass dock with:
- * - 4-tab interactive pill bar with smooth slider indicator
- * - Horizontal drag/slide gesture support to slide across tabs
- * - Floating circular "+" create button with 45-degree rotation animation
- * - Vertical frosted liquid glass popup creation menu (Reel, Post, Story, Story Highlight, Live, AI)
+ * Implements the 5-tab floating liquid glass dock matching the authentic reference design:
+ * - Direct & Center Create (+) Layout (Row 1 & 2) or Reels & Search Layout (Row 3 & 4)
+ * - Dynamic Liquid Droplet Lens with Prismatic Chromatic Aberration Rim
+ * - Convex Refractive Magnification of active and hovered icons
+ * - Fluid drag/slide gesture physics with tactile haptics
+ * - Integrated or external '+' button with 45-degree rotation
+ * - Frosted Liquid Glass creation popup menu (Reel, Post, Story, Story Highlight, Live, AI)
  */
 public class LiquidGlassSliderBarView extends FrameLayout {
+
+    public static final int LAYOUT_CENTER_CREATE = 0;
+    public static final int LAYOUT_REELS_SEARCH = 1;
 
     public interface OnTabSelectedListener {
         void onTabSelected(int index);
@@ -119,9 +115,10 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     private LinearLayout bottomRow;
     private FrameLayout tabsPill;
     private LiquidGlassDrawable tabsPillDrawable;
-    private View sliderIndicator;
+    private LiquidDropletIndicatorView dropletIndicator;
     private LinearLayout tabsRow;
-    private final ImageView[] tabIconViews = new ImageView[4];
+    private final FrameLayout[] tabContainers = new FrameLayout[5];
+    private final ImageView[] tabIconViews = new ImageView[5];
 
     private FrameLayout fabCreate;
     private LiquidGlassDrawable fabDrawable;
@@ -131,6 +128,7 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     private LinearLayout popupMenu;
 
     private int selectedIndex = 0;
+    private int currentLayout = LAYOUT_CENTER_CREATE;
     private OnTabSelectedListener tabListener;
     private OnCreateActionSelectedListener actionListener;
 
@@ -140,7 +138,6 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     private float touchDownX = 0f;
     private float touchDownY = 0f;
     private int lastHapticIndex = 0;
-    private VelocityTracker velocityTracker;
 
     public LiquidGlassSliderBarView(@NonNull Context context) {
         super(context);
@@ -168,10 +165,16 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         this.actionListener = listener;
     }
 
+    public int getCurrentLayout() {
+        return currentLayout;
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     private void init(Context context) {
         setClipChildren(false);
         setClipToPadding(false);
+
+        currentLayout = FeatureFlags.liquidGlassNavLayout;
 
         // 1. Scrim overlay for popup menu dismiss
         scrimOverlay = new FrameLayout(context);
@@ -181,7 +184,7 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         scrimOverlay.setOnClickListener(v -> closeMenu());
         addView(scrimOverlay);
 
-        // 2. Bottom Row Container (Pill + FAB)
+        // 2. Bottom Row Container (Pill + optional FAB)
         bottomRow = new LinearLayout(context);
         bottomRow.setOrientation(LinearLayout.HORIZONTAL);
         bottomRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -201,84 +204,51 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         SlideablePillLayout pillLayout = new SlideablePillLayout(context);
         pillLayout.setHost(this);
         tabsPill = pillLayout;
+
+        boolean showExternalFab = (currentLayout == LAYOUT_REELS_SEARCH && FeatureFlags.liquidGlassShowFab);
         LinearLayout.LayoutParams pillLp = new LinearLayout.LayoutParams(0, barHeight, 1.0f);
-        pillLp.rightMargin = FeatureFlags.liquidGlassShowFab ? dp(10) : 0;
+        pillLp.rightMargin = showExternalFab ? dp(10) : 0;
         tabsPill.setLayoutParams(pillLp);
+
         tabsPillDrawable = new LiquidGlassDrawable(context, FeatureFlags.liquidGlassStyle, FeatureFlags.liquidGlassBorderSheen);
         tabsPill.setBackground(tabsPillDrawable);
         tabsPill.setElevation(dp(12));
         setupPillOutline(tabsPill, barHeight, FeatureFlags.liquidGlassCornerRadius);
 
-        // Slider capsule indicator
-        sliderIndicator = new View(context);
-        GradientDrawable sliderBg = new GradientDrawable();
-        sliderBg.setShape(GradientDrawable.RECTANGLE);
-        sliderBg.setCornerRadius(dp(22));
-        sliderBg.setColor(0x42FFFFFF); // semi-transparent frosted highlight
-        sliderBg.setStroke(dp(1.2f), 0x70FFFFFF); // delicate glowing rim
-        sliderIndicator.setBackground(sliderBg);
+        // High-Fidelity Liquid Droplet Lens Indicator (with Chromatic Dispersion Rim)
+        dropletIndicator = new LiquidDropletIndicatorView(context);
+        dropletIndicator.setStyle(FeatureFlags.liquidGlassStyle);
+        dropletIndicator.setChromaticEnabled(FeatureFlags.liquidGlassChromaticLens);
+        dropletIndicator.setCornerRadius(dp(22));
 
-        int sliderHeight = Math.max(dp(32), barHeight - dp(12));
-        FrameLayout.LayoutParams sliderLp = new FrameLayout.LayoutParams(dp(54), sliderHeight);
-        sliderLp.gravity = Gravity.CENTER_VERTICAL;
-        sliderLp.leftMargin = dp(6);
-        sliderIndicator.setLayoutParams(sliderLp);
-        tabsPill.addView(sliderIndicator);
+        int dropletHeight = Math.max(dp(36), barHeight - dp(10));
+        FrameLayout.LayoutParams dropletLp = new FrameLayout.LayoutParams(dp(52), dropletHeight);
+        dropletLp.gravity = Gravity.CENTER_VERTICAL;
+        dropletLp.leftMargin = dp(4);
+        dropletIndicator.setLayoutParams(dropletLp);
+        tabsPill.addView(dropletIndicator);
 
-        // Tabs Row
+        // 5-Tab Row Container
         tabsRow = new LinearLayout(context);
         tabsRow.setOrientation(LinearLayout.HORIZONTAL);
         tabsRow.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         tabsRow.setGravity(Gravity.CENTER);
 
-        int[] iconDrawables = {
-                R.drawable.ic_home,
-                R.drawable.ic_movie,
-                R.drawable.ic_heart,
-                R.drawable.ic_profile
-        };
-        String[] fallbackKeys = {
-                ModuleResourceLoader.KEY_HOME,
-                ModuleResourceLoader.KEY_REEL,
-                ModuleResourceLoader.KEY_HEART,
-                ModuleResourceLoader.KEY_PROFILE
-        };
-
-        for (int i = 0; i < 4; i++) {
-            final int index = i;
-            FrameLayout tabContainer = new FrameLayout(context);
-            LinearLayout.LayoutParams tLp = new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1.0f);
-            tabContainer.setLayoutParams(tLp);
-
-            ImageView iv = new ImageView(context);
-            int iconSize = dp(24);
-            FrameLayout.LayoutParams ivLp = new FrameLayout.LayoutParams(iconSize, iconSize, Gravity.CENTER);
-            iv.setLayoutParams(ivLp);
-            android.graphics.drawable.Drawable tabIcon = ModuleResourceLoader.loadIcon(
-                    context, iconDrawables[i], fallbackKeys[i], i == 0 ? 0xFFFFFFFF : 0xA5FFFFFF);
-            iv.setImageDrawable(tabIcon);
-            iv.setColorFilter(i == 0 ? 0xFFFFFFFF : 0xA5FFFFFF);
-            tabContainer.addView(iv);
-            tabIconViews[i] = iv;
-
-            tabContainer.setOnClickListener(v -> selectTab(index, true));
-            tabsRow.addView(tabContainer);
-        }
+        buildTabItems(context);
         tabsPill.addView(tabsRow);
 
-        // Gesture slider support: Drag horizontally to slide between tabs
+        // Pill touch listener
         tabsPill.setOnTouchListener((v, event) -> handlePillTouchEvent(event));
-
         bottomRow.addView(tabsPill);
 
-        // 2B. Liquid Glass Circular "+" Button (FAB)
+        // 2B. External Floating FAB (used in Reels & Search layout when enabled)
         fabCreate = new FrameLayout(context);
         LinearLayout.LayoutParams fabLp = new LinearLayout.LayoutParams(barHeight, barHeight);
         fabCreate.setLayoutParams(fabLp);
         fabDrawable = new LiquidGlassDrawable(context, FeatureFlags.liquidGlassStyle, FeatureFlags.liquidGlassBorderSheen);
         fabCreate.setBackground(fabDrawable);
         fabCreate.setElevation(dp(12));
-        fabCreate.setVisibility(FeatureFlags.liquidGlassShowFab ? VISIBLE : GONE);
+        fabCreate.setVisibility(showExternalFab ? VISIBLE : GONE);
         setupCircleOutline(fabCreate, barHeight);
 
         fabIcon = new ImageView(context);
@@ -287,15 +257,14 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         android.graphics.drawable.Drawable plusIcon = ModuleResourceLoader.loadIcon(
                 context, R.drawable.ic_plus, ModuleResourceLoader.KEY_PLUS, 0xFFFFFFFF);
         fabIcon.setImageDrawable(plusIcon);
-        fabIcon.setColorFilter(0xFFFFFFFF);
         fabCreate.addView(fabIcon);
 
-        fabCreate.setOnClickListener(v -> toggleMenu());
+        fabCreate.setOnClickListener(v -> toggleMenu(fabCreate));
         bottomRow.addView(fabCreate);
 
         addView(bottomRow);
 
-        // Window insets listener: elevate bottom dock above system navigation bar
+        // Insets listener
         ViewCompat.setOnApplyWindowInsetsListener(this, (v, insets) -> {
             int navBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
             if (navBottom == 0) {
@@ -305,8 +274,118 @@ public class LiquidGlassSliderBarView extends FrameLayout {
             return insets;
         });
 
-        // 3. Popup Creation Menu (Liquid Glass card aligned above the FAB)
+        // 3. Popup Creation Menu (iOS 27 Liquid Glass card)
         buildPopupMenu(context);
+
+        // Initial tab selection
+        post(() -> selectTab(0, false));
+    }
+
+    private void buildTabItems(Context context) {
+        tabsRow.removeAllViews();
+
+        int[] iconDrawables;
+        String[] fallbackKeys;
+
+        if (currentLayout == LAYOUT_CENTER_CREATE) {
+            // Direct & Center Create (+) Layout matching Top Screenshot:
+            // [0] Home, [1] Direct/Share, [2] Create (+), [3] Heart, [4] Profile
+            iconDrawables = new int[]{
+                    R.drawable.ic_home,
+                    R.drawable.ic_direct,
+                    R.drawable.ic_plus,
+                    R.drawable.ic_heart,
+                    R.drawable.ic_profile
+            };
+            fallbackKeys = new String[]{
+                    ModuleResourceLoader.KEY_HOME,
+                    ModuleResourceLoader.KEY_DIRECT,
+                    ModuleResourceLoader.KEY_PLUS,
+                    ModuleResourceLoader.KEY_HEART,
+                    ModuleResourceLoader.KEY_PROFILE
+            };
+        } else {
+            // Reels, Direct & Search Layout matching Bottom Screenshot:
+            // [0] Home, [1] Reels, [2] Direct/Share, [3] Search, [4] Profile
+            iconDrawables = new int[]{
+                    R.drawable.ic_home,
+                    R.drawable.ic_reels,
+                    R.drawable.ic_direct,
+                    R.drawable.ic_search,
+                    R.drawable.ic_profile
+            };
+            fallbackKeys = new String[]{
+                    ModuleResourceLoader.KEY_HOME,
+                    ModuleResourceLoader.KEY_REEL,
+                    ModuleResourceLoader.KEY_DIRECT,
+                    ModuleResourceLoader.KEY_SEARCH,
+                    ModuleResourceLoader.KEY_PROFILE
+            };
+        }
+
+        for (int i = 0; i < 5; i++) {
+            final int index = i;
+            FrameLayout tabContainer = new FrameLayout(context);
+            LinearLayout.LayoutParams tLp = new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1.0f);
+            tabContainer.setLayoutParams(tLp);
+
+            ImageView iv = new ImageView(context);
+            int iconSize = dp(23);
+            FrameLayout.LayoutParams ivLp = new FrameLayout.LayoutParams(iconSize, iconSize, Gravity.CENTER);
+            iv.setLayoutParams(ivLp);
+
+            android.graphics.drawable.Drawable tabIcon = ModuleResourceLoader.loadIcon(
+                    context, iconDrawables[i], fallbackKeys[i], 0xFFFFFFFF);
+            iv.setImageDrawable(tabIcon);
+            iv.setAlpha(i == selectedIndex ? 1.0f : 0.88f);
+            iv.setScaleX(i == selectedIndex ? 1.22f : 1.0f);
+            iv.setScaleY(i == selectedIndex ? 1.22f : 1.0f);
+
+            tabContainer.addView(iv);
+            tabContainers[i] = tabContainer;
+            tabIconViews[i] = iv;
+
+            tabContainer.setOnClickListener(v -> onTabClicked(index));
+            tabsRow.addView(tabContainer);
+        }
+    }
+
+    private void onTabClicked(int index) {
+        if (currentLayout == LAYOUT_CENTER_CREATE && index == 2) {
+            // Center '+' button tapped!
+            if (FeatureFlags.enableLiquidGlassQuickActions) {
+                toggleMenu(tabContainers[2]);
+            } else if (isPreviewMode) {
+                toggleMenu(tabContainers[2]);
+            } else if (actionListener != null) {
+                actionListener.onCreateAction("camera");
+            }
+            return;
+        }
+
+        selectTab(index, true);
+    }
+
+    public void setLayout(int layoutMode) {
+        if (this.currentLayout != layoutMode) {
+            this.currentLayout = layoutMode;
+            FeatureFlags.liquidGlassNavLayout = layoutMode;
+            buildTabItems(getContext());
+
+            boolean showExternalFab = (currentLayout == LAYOUT_REELS_SEARCH && FeatureFlags.liquidGlassShowFab);
+            if (tabsPill != null) {
+                LinearLayout.LayoutParams pillLp = (LinearLayout.LayoutParams) tabsPill.getLayoutParams();
+                if (pillLp != null) {
+                    pillLp.rightMargin = showExternalFab ? dp(10) : 0;
+                    tabsPill.setLayoutParams(pillLp);
+                }
+            }
+            if (fabCreate != null) {
+                fabCreate.setVisibility(showExternalFab ? VISIBLE : GONE);
+            }
+
+            post(() -> selectTab(Math.min(selectedIndex, 4), false));
+        }
     }
 
     @Override
@@ -362,6 +441,7 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     public void applyConfiguration(int style, int opacity, int widthMargin, int height, int cornerRadius, boolean borderSheen, boolean showFab) {
         int barHeightPx = dp(height);
         int marginPx = dp(widthMargin);
+        boolean showExternalFab = (currentLayout == LAYOUT_REELS_SEARCH && showFab);
 
         if (bottomRow != null) {
             LayoutParams rowLp = (LayoutParams) bottomRow.getLayoutParams();
@@ -376,7 +456,7 @@ public class LiquidGlassSliderBarView extends FrameLayout {
             LinearLayout.LayoutParams pillLp = (LinearLayout.LayoutParams) tabsPill.getLayoutParams();
             if (pillLp != null) {
                 pillLp.height = barHeightPx;
-                pillLp.rightMargin = showFab ? dp(10) : 0;
+                pillLp.rightMargin = showExternalFab ? dp(10) : 0;
                 tabsPill.setLayoutParams(pillLp);
             }
             setupPillOutline(tabsPill, barHeightPx, cornerRadius);
@@ -385,21 +465,20 @@ public class LiquidGlassSliderBarView extends FrameLayout {
             }
         }
 
-        if (sliderIndicator != null) {
-            int sliderHeight = Math.max(dp(32), barHeightPx - dp(12));
-            ViewGroup.LayoutParams slp = sliderIndicator.getLayoutParams();
-            if (slp != null) {
-                slp.height = sliderHeight;
-                sliderIndicator.setLayoutParams(slp);
+        if (dropletIndicator != null) {
+            int dropletHeight = Math.max(dp(34), barHeightPx - dp(10));
+            ViewGroup.LayoutParams dlp = dropletIndicator.getLayoutParams();
+            if (dlp != null) {
+                dlp.height = dropletHeight;
+                dropletIndicator.setLayoutParams(dlp);
             }
-            if (sliderIndicator.getBackground() instanceof GradientDrawable) {
-                GradientDrawable sliderBg = (GradientDrawable) sliderIndicator.getBackground();
-                sliderBg.setCornerRadius(cornerRadius > 0 ? dp(cornerRadius - 4) : (sliderHeight / 2f));
-            }
+            dropletIndicator.setStyle(style);
+            dropletIndicator.setChromaticEnabled(FeatureFlags.liquidGlassChromaticLens);
+            dropletIndicator.setCornerRadius(cornerRadius > 0 ? dp(cornerRadius - 4) : (dropletHeight / 2f));
         }
 
         if (fabCreate != null) {
-            fabCreate.setVisibility(showFab ? VISIBLE : GONE);
+            fabCreate.setVisibility(showExternalFab ? VISIBLE : GONE);
             LinearLayout.LayoutParams fabLp = (LinearLayout.LayoutParams) fabCreate.getLayoutParams();
             if (fabLp != null) {
                 fabLp.width = barHeightPx;
@@ -417,16 +496,11 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         invalidate();
     }
 
-    public void setThemePalette(ps.reso.instaeclipse.mods.ui.theme.IgThemePalette palette) {
+    public void setThemePalette(IgThemePalette palette) {
         if (palette == null) return;
         try {
-            int accent = palette.accent;
-            if (sliderIndicator != null && sliderIndicator.getBackground() instanceof GradientDrawable) {
-                GradientDrawable gd = (GradientDrawable) sliderIndicator.getBackground();
-                int tintBg = (0x35 << 24) | (accent & 0x00FFFFFF);
-                int tintStroke = (0x95 << 24) | (accent & 0x00FFFFFF);
-                gd.setColor(tintBg);
-                gd.setStroke(dp(1.3f), tintStroke);
+            if (dropletIndicator != null) {
+                dropletIndicator.setAccentColor(palette.accent);
             }
         } catch (Throwable ignored) {}
     }
@@ -464,14 +538,13 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         popupMenu.setElevation(dp(16));
         popupMenu.setPadding(dp(8), dp(10), dp(8), dp(10));
 
-        int menuWidth = dp(190);
+        int menuWidth = dp(196);
         LayoutParams pLp = new LayoutParams(menuWidth, LayoutParams.WRAP_CONTENT);
-        pLp.gravity = Gravity.BOTTOM | Gravity.END;
-        pLp.rightMargin = dp(14);
-        pLp.bottomMargin = dp(80); // floating right above the "+" button
+        pLp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        pLp.bottomMargin = dp(84);
         popupMenu.setLayoutParams(pLp);
-        popupMenu.setPivotX(menuWidth - dp(28));
-        popupMenu.setPivotY(dp(200));
+        popupMenu.setPivotX(menuWidth / 2f);
+        popupMenu.setPivotY(dp(220));
 
         popupMenu.setOutlineProvider(new ViewOutlineProvider() {
             @Override
@@ -484,13 +557,12 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         });
         popupMenu.setClipToOutline(true);
 
-        // Items matching the user screenshot: Reel, Post, Story, Story highlight, Live, AI
-        addMenuItem(context, R.drawable.ic_movie, ModuleResourceLoader.KEY_REEL, "Reel", "reel");
+        addMenuItem(context, R.drawable.ic_reels, ModuleResourceLoader.KEY_REEL, "Reel", "reel");
         addMenuItem(context, R.drawable.ic_grid_post, ModuleResourceLoader.KEY_POST, "Post", "post");
         addMenuItem(context, R.drawable.ic_story_dashed, ModuleResourceLoader.KEY_STORY, "Story", "story");
         addMenuItem(context, R.drawable.ic_story_highlight, ModuleResourceLoader.KEY_HIGHLIGHT, "Story highlight", "highlight");
         addMenuItem(context, R.drawable.ic_live, ModuleResourceLoader.KEY_LIVE, "Live", "live");
-        addMenuItem(context, R.drawable.ic_sparkle, ModuleResourceLoader.KEY_AI, "AI", "ai");
+        addMenuItem(context, R.drawable.ic_sparkle, ModuleResourceLoader.KEY_AI, "AI Studio", "ai");
 
         popupMenu.setVisibility(GONE);
         popupMenu.setScaleX(0.7f);
@@ -503,15 +575,9 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(12), dp(9), dp(12), dp(9));
+        row.setPadding(dp(14), dp(10), dp(14), dp(10));
         row.setClickable(true);
         row.setFocusable(true);
-
-        GradientDrawable rowRipple = new GradientDrawable();
-        rowRipple.setShape(GradientDrawable.RECTANGLE);
-        rowRipple.setCornerRadius(dp(14));
-        rowRipple.setColor(Color.TRANSPARENT);
-        row.setBackground(rowRipple);
 
         ImageView iv = new ImageView(context);
         int iconSize = dp(20);
@@ -521,7 +587,6 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         android.graphics.drawable.Drawable itemIcon = ModuleResourceLoader.loadIcon(
                 context, iconRes, fallbackKey, 0xFFFFFFFF);
         iv.setImageDrawable(itemIcon);
-        iv.setColorFilter(0xFFFFFFFF);
         row.addView(iv);
 
         TextView tv = new TextView(context);
@@ -544,17 +609,30 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     }
 
     public void selectTab(int index, boolean animate) {
-        if (index < 0 || index >= 4) return;
+        if (index < 0 || index >= 5) return;
         selectedIndex = index;
 
-        for (int i = 0; i < 4; i++) {
+        // Animate Convex Refractive Magnification of active and non-active icons
+        for (int i = 0; i < 5; i++) {
             boolean isSel = (i == index);
-            tabIconViews[i].setColorFilter(isSel ? 0xFFFFFFFF : 0x90FFFFFF);
-            tabIconViews[i].animate()
-                    .scaleX(isSel ? 1.15f : 1.0f)
-                    .scaleY(isSel ? 1.15f : 1.0f)
-                    .setDuration(200)
-                    .start();
+            if (tabIconViews[i] != null) {
+                float targetScale = isSel ? 1.22f : 1.0f;
+                float targetAlpha = isSel ? 1.0f : 0.86f;
+
+                if (animate) {
+                    tabIconViews[i].animate()
+                            .scaleX(targetScale)
+                            .scaleY(targetScale)
+                            .alpha(targetAlpha)
+                            .setDuration(220)
+                            .setInterpolator(new OvershootInterpolator(1.4f))
+                            .start();
+                } else {
+                    tabIconViews[i].setScaleX(targetScale);
+                    tabIconViews[i].setScaleY(targetScale);
+                    tabIconViews[i].setAlpha(targetAlpha);
+                }
+            }
         }
 
         updateSliderPosition(index, animate);
@@ -565,37 +643,34 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     }
 
     public void syncSelectedTab(int index) {
-        if (index < 0 || index >= 4 || index == selectedIndex) return;
-        selectedIndex = index;
-        for (int i = 0; i < 4; i++) {
-            boolean isSel = (i == index);
-            tabIconViews[i].setColorFilter(isSel ? 0xFFFFFFFF : 0x90FFFFFF);
-        }
-        updateSliderPosition(index, true);
+        if (index < 0 || index >= 5 || index == selectedIndex) return;
+        selectTab(index, true);
     }
 
     private void updateSliderPosition(int index, boolean animate) {
         tabsPill.post(() -> {
             int totalW = tabsPill.getWidth();
             if (totalW <= 0) return;
-            float tabW = totalW / 4f;
-            float sliderW = tabW - dp(10);
+            float tabW = totalW / 5f;
+            float dropletW = tabW - dp(8);
 
-            ViewGroup.LayoutParams lp = sliderIndicator.getLayoutParams();
-            if (lp.width != (int) sliderW) {
-                lp.width = (int) sliderW;
-                sliderIndicator.setLayoutParams(lp);
+            ViewGroup.LayoutParams lp = dropletIndicator.getLayoutParams();
+            if (lp.width != (int) dropletW) {
+                lp.width = (int) dropletW;
+                dropletIndicator.setLayoutParams(lp);
             }
 
-            float targetX = (index * tabW) + dp(5);
+            float targetX = (index * tabW) + dp(4);
             if (animate) {
-                sliderIndicator.animate()
+                dropletIndicator.animate()
                         .translationX(targetX)
-                        .setDuration(240)
-                        .setInterpolator(new DecelerateInterpolator())
+                        .scaleX(1.0f)
+                        .setDuration(260)
+                        .setInterpolator(new OvershootInterpolator(1.1f))
                         .start();
             } else {
-                sliderIndicator.setTranslationX(targetX);
+                dropletIndicator.setTranslationX(targetX);
+                dropletIndicator.setScaleX(1.0f);
             }
         });
     }
@@ -610,7 +685,7 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     private boolean handlePillTouchEvent(MotionEvent event) {
         int totalW = tabsPill.getWidth();
         if (totalW <= 0) return false;
-        float tabW = totalW / 4f;
+        float tabW = totalW / 5f;
 
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
@@ -626,41 +701,49 @@ public class LiquidGlassSliderBarView extends FrameLayout {
                     isDraggingSlider = true;
                 }
                 if (isDraggingSlider) {
-                    float sliderW = tabW - dp(10);
-                    float curX = event.getX() - (sliderW / 2f);
-                    float clampedX = Math.max(dp(4), Math.min(totalW - sliderW - dp(4), curX));
-                    sliderIndicator.setTranslationX(clampedX);
+                    float dropletW = tabW - dp(8);
+                    float curX = event.getX() - (dropletW / 2f);
+                    float clampedX = Math.max(dp(3), Math.min(totalW - dropletW - dp(3), curX));
+                    dropletIndicator.setTranslationX(clampedX);
+
+                    // Fluid elastic stretching during drag
+                    dropletIndicator.setScaleX(1.14f);
 
                     int hoveredIndex = (int) (event.getX() / tabW);
-                    hoveredIndex = Math.max(0, Math.min(3, hoveredIndex));
+                    hoveredIndex = Math.max(0, Math.min(4, hoveredIndex));
                     if (hoveredIndex != lastHapticIndex) {
                         lastHapticIndex = hoveredIndex;
                         triggerHapticFeedback();
-                        // Dynamically update tab icon visual states during slide
-                        for (int k = 0; k < 4; k++) {
+
+                        // Magnify icon under the lens in real-time
+                        for (int k = 0; k < 5; k++) {
                             boolean isHovered = (k == hoveredIndex);
-                            tabIconViews[k].setColorFilter(isHovered ? 0xFFFFFFFF : 0x90FFFFFF);
-                            tabIconViews[k].setScaleX(isHovered ? 1.15f : 1.0f);
-                            tabIconViews[k].setScaleY(isHovered ? 1.15f : 1.0f);
+                            if (tabIconViews[k] != null) {
+                                tabIconViews[k].setScaleX(isHovered ? 1.22f : 1.0f);
+                                tabIconViews[k].setScaleY(isHovered ? 1.22f : 1.0f);
+                                tabIconViews[k].setAlpha(isHovered ? 1.0f : 0.86f);
+                            }
                         }
                     }
                 }
                 return true;
 
             case MotionEvent.ACTION_UP:
+                dropletIndicator.animate().scaleX(1.0f).setDuration(160).start();
                 if (isDraggingSlider) {
                     int finalIndex = (int) (event.getX() / tabW);
-                    finalIndex = Math.max(0, Math.min(3, finalIndex));
-                    selectTab(finalIndex, true);
+                    finalIndex = Math.max(0, Math.min(4, finalIndex));
+                    onTabClicked(finalIndex);
                     isDraggingSlider = false;
                 } else {
                     int clickedIndex = (int) (event.getX() / tabW);
-                    clickedIndex = Math.max(0, Math.min(3, clickedIndex));
-                    selectTab(clickedIndex, true);
+                    clickedIndex = Math.max(0, Math.min(4, clickedIndex));
+                    onTabClicked(clickedIndex);
                 }
                 return true;
 
             case MotionEvent.ACTION_CANCEL:
+                dropletIndicator.animate().scaleX(1.0f).setDuration(160).start();
                 updateSliderPosition(selectedIndex, true);
                 isDraggingSlider = false;
                 return true;
@@ -668,25 +751,51 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         return false;
     }
 
-    private void toggleMenu() {
+    public void toggleMenu(View anchorView) {
         if (isMenuOpen) {
             closeMenu();
         } else {
-            openMenu();
+            openMenu(anchorView);
         }
     }
 
-    private void openMenu() {
+    private void openMenu(View anchorView) {
         isMenuOpen = true;
         scrimOverlay.setVisibility(VISIBLE);
+
+        // Position popup right above anchor
+        if (anchorView != null && popupMenu != null) {
+            int[] loc = new int[2];
+            anchorView.getLocationInWindow(loc);
+            int[] myLoc = new int[2];
+            getLocationInWindow(myLoc);
+
+            int anchorCenterX = loc[0] - myLoc[0] + (anchorView.getWidth() / 2);
+            LayoutParams pLp = (LayoutParams) popupMenu.getLayoutParams();
+            if (pLp != null) {
+                int menuW = dp(196);
+                pLp.gravity = Gravity.BOTTOM | Gravity.START;
+                pLp.leftMargin = Math.max(dp(12), Math.min(getWidth() - menuW - dp(12), anchorCenterX - (menuW / 2)));
+                popupMenu.setLayoutParams(pLp);
+            }
+        }
+
         popupMenu.setVisibility(VISIBLE);
 
         // Rotate '+' icon to '✕'
-        fabIcon.animate()
-                .rotation(45f)
-                .setDuration(260)
-                .setInterpolator(new OvershootInterpolator())
-                .start();
+        if (currentLayout == LAYOUT_CENTER_CREATE && tabIconViews[2] != null) {
+            tabIconViews[2].animate()
+                    .rotation(45f)
+                    .setDuration(260)
+                    .setInterpolator(new OvershootInterpolator())
+                    .start();
+        } else if (fabIcon != null) {
+            fabIcon.animate()
+                    .rotation(45f)
+                    .setDuration(260)
+                    .setInterpolator(new OvershootInterpolator())
+                    .start();
+        }
 
         popupMenu.animate()
                 .alpha(1f)
@@ -705,11 +814,19 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         scrimOverlay.setVisibility(GONE);
 
         // Rotate '✕' icon back to '+'
-        fabIcon.animate()
-                .rotation(0f)
-                .setDuration(220)
-                .setInterpolator(new DecelerateInterpolator())
-                .start();
+        if (currentLayout == LAYOUT_CENTER_CREATE && tabIconViews[2] != null) {
+            tabIconViews[2].animate()
+                    .rotation(0f)
+                    .setDuration(220)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .start();
+        } else if (fabIcon != null) {
+            fabIcon.animate()
+                    .rotation(0f)
+                    .setDuration(220)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .start();
+        }
 
         popupMenu.animate()
                 .alpha(0f)

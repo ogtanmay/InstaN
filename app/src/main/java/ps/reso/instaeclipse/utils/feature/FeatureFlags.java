@@ -95,6 +95,8 @@ public class FeatureFlags {
     // Liquid Glass Nav Bar
     public static boolean enableLiquidGlassNavBar = false;
     public static int liquidGlassStyle = 5; // 0: Floating Pill, 1: Docked Glass, 2: Aurora Neon, 3: Obsidian Dark, 4: Crystal Clear, 5: iOS 27 Liquid Glass
+    public static int liquidGlassNavLayout = 0; // 0: Direct & Center Create (+), 1: Reels, Direct & Search
+    public static boolean liquidGlassChromaticLens = true; // Chromatic aberration & refractive magnification lens
     public static boolean liquidGlassBorderSheen = true;
     public static int liquidGlassBlurRadius = 25;
     public static int liquidGlassOpacity = 80; // 10 - 100%

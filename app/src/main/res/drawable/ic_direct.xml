@@ -3,11 +3,12 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!-- Instagram Direct / Share paper airplane -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="2.0"
+        android:strokeWidth="1.9"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M10.5,17 C14.09,17 17,14.09 17,10.5 C17,6.91 14.09,4 10.5,4 C6.91,4 4,6.91 4,10.5 C4,14.09 6.91,17 10.5,17 Z M15.5,15.5 L20.5,20.5" />
+        android:pathData="M21.5,2.5 L10.0,14.0 M21.5,2.5 L14.5,21.5 L10.0,14.0 L2.5,9.5 L21.5,2.5 Z" />
 </vector>

@@ -260,6 +260,13 @@
     <string name="liquid_glass_preview_tag">iOS 27 Fluid Glass</string>
     <string name="liquid_glass_preview_hint">Interactive Preview • Tap tabs or drag slider</string>
     <string name="liquid_glass_options_card_title">Dock Dimensions &amp; Styling</string>
+    <string name="liquid_glass_layout">Nav Bar Layout</string>
+    <string name="liquid_glass_layout_center_create">Direct &amp; Center Create (+) (iOS 27 Dock)</string>
+    <string name="liquid_glass_layout_reels_search">Reels, Direct &amp; Search (Classic Dock)</string>
+    <string name="liquid_glass_chromatic_lens">Liquid Droplet Chromatic Lens</string>
+    <string name="liquid_glass_chromatic_lens_desc">Prismatic rainbow dispersion &amp; optical magnification over icons</string>
+    <string name="liquid_glass_wallpaper_ocean">🌊 Ocean View</string>
+    <string name="liquid_glass_wallpaper_pastel">🎨 Pastel Art</string>
     <string name="liquid_glass_reset">Reset to Defaults</string>
     <string name="liquid_glass_reset_confirm">Nav bar settings reset to iOS 27 defaults.</string>
 

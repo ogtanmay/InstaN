@@ -48,6 +48,8 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
 
     private static final String KEY_NAV_ENABLED = "enableLiquidGlassNavBar";
     private static final String KEY_NAV_STYLE = "liquidGlassStyle";
+    private static final String KEY_NAV_LAYOUT = "liquidGlassNavLayout";
+    private static final String KEY_NAV_CHROMATIC = "liquidGlassChromaticLens";
     private static final String KEY_NAV_OPACITY = "liquidGlassOpacity";
     private static final String KEY_NAV_MARGIN = "liquidGlassWidthMargin";
     private static final String KEY_NAV_HEIGHT = "liquidGlassHeight";
@@ -73,6 +75,11 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
     private MaterialSwitch navEnableSwitch;
     private LiquidGlassSliderBarView navPreviewSlider;
     private TextView navPreviewTag;
+    private ImageView navPreviewBgImage;
+    private View navPreviewWpPastel;
+    private View navPreviewWpOcean;
+    private View navLayoutCard;
+    private TextView navLayoutText;
     private View navStyleCard;
     private TextView navStyleText;
     private TextView navOpacityLabel;
@@ -84,6 +91,7 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
     private TextView navRadiusLabel;
     private SeekBar navRadiusSlider;
     private MaterialSwitch navSheenSwitch;
+    private MaterialSwitch navChromaticSwitch;
     private MaterialSwitch navFabSwitch;
     private MaterialSwitch navQuickActionsSwitch;
     private MaterialButton navResetButton;
@@ -103,6 +111,8 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
     private int selectedPresetId = 1;
 
     private int navStyle = 5;
+    private int navLayout = 0;
+    private boolean navChromatic = true;
     private int navOpacity = 80;
     private int navMargin = 14;
     private int navHeight = 56;
@@ -178,6 +188,11 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         navEnableSwitch = findViewById(R.id.theme_nav_enable_switch);
         navPreviewSlider = findViewById(R.id.theme_nav_preview_slider);
         navPreviewTag = findViewById(R.id.theme_nav_preview_tag);
+        navPreviewBgImage = findViewById(R.id.theme_nav_preview_bg_image);
+        navPreviewWpPastel = findViewById(R.id.theme_nav_preview_wp_pastel);
+        navPreviewWpOcean = findViewById(R.id.theme_nav_preview_wp_ocean);
+        navLayoutCard = findViewById(R.id.theme_nav_layout_card);
+        navLayoutText = findViewById(R.id.theme_nav_layout_text);
         navStyleCard = findViewById(R.id.theme_nav_style_card);
         navStyleText = findViewById(R.id.theme_nav_style_text);
         navOpacityLabel = findViewById(R.id.theme_nav_opacity_label);
@@ -189,6 +204,7 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         navRadiusLabel = findViewById(R.id.theme_nav_radius_label);
         navRadiusSlider = findViewById(R.id.theme_nav_radius_slider);
         navSheenSwitch = findViewById(R.id.theme_nav_sheen_switch);
+        navChromaticSwitch = findViewById(R.id.theme_nav_chromatic_switch);
         navFabSwitch = findViewById(R.id.theme_nav_fab_switch);
         navQuickActionsSwitch = findViewById(R.id.theme_nav_quick_actions_switch);
         navResetButton = findViewById(R.id.theme_nav_reset);
@@ -196,6 +212,8 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         // Load values
         boolean navEnabled = cache().getBoolean(KEY_NAV_ENABLED, FeatureFlags.enableLiquidGlassNavBar);
         navStyle = cache().getInt(KEY_NAV_STYLE, FeatureFlags.liquidGlassStyle);
+        navLayout = cache().getInt(KEY_NAV_LAYOUT, FeatureFlags.liquidGlassNavLayout);
+        navChromatic = cache().getBoolean(KEY_NAV_CHROMATIC, FeatureFlags.liquidGlassChromaticLens);
         navOpacity = cache().getInt(KEY_NAV_OPACITY, FeatureFlags.liquidGlassOpacity);
         navMargin = cache().getInt(KEY_NAV_MARGIN, FeatureFlags.liquidGlassWidthMargin);
         navHeight = cache().getInt(KEY_NAV_HEIGHT, FeatureFlags.liquidGlassHeight);
@@ -213,6 +231,26 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         if (navPreviewSlider != null) {
             navPreviewSlider.setPreviewMode(true);
             navPreviewSlider.setThemePalette(activePalette());
+        }
+
+        // Preview wallpaper switchers
+        if (navPreviewWpPastel != null) {
+            navPreviewWpPastel.setOnClickListener(v -> {
+                if (navPreviewBgImage != null) {
+                    navPreviewBgImage.setImageResource(R.drawable.preview_pastel_bg);
+                }
+            });
+        }
+        if (navPreviewWpOcean != null) {
+            navPreviewWpOcean.setOnClickListener(v -> {
+                if (navPreviewBgImage != null) {
+                    navPreviewBgImage.setImageResource(R.drawable.preview_ocean_bg);
+                }
+            });
+        }
+
+        if (navLayoutCard != null) {
+            navLayoutCard.setOnClickListener(v -> showNavLayoutPicker());
         }
 
         if (navStyleCard != null) {
@@ -304,6 +342,16 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
             updateNavPreview();
         });
 
+        if (navChromaticSwitch != null) {
+            navChromaticSwitch.setChecked(navChromatic);
+            navChromaticSwitch.setOnCheckedChangeListener((bv, isChecked) -> {
+                navChromatic = isChecked;
+                FeatureFlags.liquidGlassChromaticLens = isChecked;
+                persistNavBoolean(KEY_NAV_CHROMATIC, isChecked);
+                updateNavPreview();
+            });
+        }
+
         navFabSwitch.setChecked(navFab);
         navFabSwitch.setOnCheckedChangeListener((bv, isChecked) -> {
             navFab = isChecked;
@@ -351,8 +399,12 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
 
     private void updateNavPreview() {
         if (navPreviewSlider != null) {
+            navPreviewSlider.setLayout(navLayout);
             navPreviewSlider.applyConfiguration(navStyle, navOpacity, navMargin, navHeight, navRadius, navSheen, navFab);
             navPreviewSlider.setThemePalette(activePalette());
+        }
+        if (navLayoutText != null) {
+            navLayoutText.setText(getNavLayoutName(navLayout));
         }
         if (navStyleText != null) {
             navStyleText.setText(getNavStyleName(navStyle));
@@ -360,6 +412,34 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         if (navPreviewTag != null) {
             navPreviewTag.setText(getNavStyleName(navStyle));
         }
+    }
+
+    private String getNavLayoutName(int layout) {
+        if (layout == LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH) {
+            return getString(R.string.liquid_glass_layout_reels_search);
+        }
+        return getString(R.string.liquid_glass_layout_center_create);
+    }
+
+    private void showNavLayoutPicker() {
+        String[] labels = {
+                getString(R.string.liquid_glass_layout_center_create),
+                getString(R.string.liquid_glass_layout_reels_search)
+        };
+        final int[] values = { LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE, LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH };
+        int currentIndex = (navLayout == LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH) ? 1 : 0;
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.liquid_glass_layout)
+                .setSingleChoiceItems(labels, currentIndex, (dialog, which) -> {
+                    navLayout = values[which];
+                    FeatureFlags.liquidGlassNavLayout = navLayout;
+                    persistNavInt(KEY_NAV_LAYOUT, navLayout);
+                    updateNavPreview();
+                    dialog.dismiss();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private String getNavStyleName(int style) {
@@ -407,6 +487,8 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
 
     private void resetNavDefaults() {
         navStyle = 5;
+        navLayout = 0;
+        navChromatic = true;
         navOpacity = 80;
         navMargin = 14;
         navHeight = 56;
@@ -416,6 +498,8 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         navQuickActions = true;
 
         FeatureFlags.liquidGlassStyle = navStyle;
+        FeatureFlags.liquidGlassNavLayout = navLayout;
+        FeatureFlags.liquidGlassChromaticLens = navChromatic;
         FeatureFlags.liquidGlassOpacity = navOpacity;
         FeatureFlags.liquidGlassWidthMargin = navMargin;
         FeatureFlags.liquidGlassHeight = navHeight;
@@ -426,6 +510,8 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
 
         SharedPreferences.Editor editor = cache().edit();
         editor.putInt(KEY_NAV_STYLE, navStyle);
+        editor.putInt(KEY_NAV_LAYOUT, navLayout);
+        editor.putBoolean(KEY_NAV_CHROMATIC, navChromatic);
         editor.putInt(KEY_NAV_OPACITY, navOpacity);
         editor.putInt(KEY_NAV_MARGIN, navMargin);
         editor.putInt(KEY_NAV_HEIGHT, navHeight);
@@ -437,6 +523,8 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         makeCacheWorldReadable();
 
         persistNavInt(KEY_NAV_STYLE, navStyle);
+        persistNavInt(KEY_NAV_LAYOUT, navLayout);
+        persistNavBoolean(KEY_NAV_CHROMATIC, navChromatic);
         persistNavInt(KEY_NAV_OPACITY, navOpacity);
         persistNavInt(KEY_NAV_MARGIN, navMargin);
         persistNavInt(KEY_NAV_HEIGHT, navHeight);
@@ -448,8 +536,9 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         navOpacitySlider.setProgress(navOpacity);
         navMarginSlider.setProgress(navMargin);
         navHeightSlider.setProgress(navHeight - 48);
-        navRadiusSlider.setProgress(navRadius - 8);
+        navRadiusSlider.setProgress(navRadius - 14);
         navSheenSwitch.setChecked(navSheen);
+        if (navChromaticSwitch != null) navChromaticSwitch.setChecked(navChromatic);
         navFabSwitch.setChecked(navFab);
         navQuickActionsSwitch.setChecked(navQuickActions);
 

@@ -41,6 +41,8 @@ public final class ModuleResourceLoader {
 
     public static final String KEY_HOME = "home";
     public static final String KEY_REEL = "reel";
+    public static final String KEY_DIRECT = "direct";
+    public static final String KEY_SEARCH = "search";
     public static final String KEY_HEART = "heart";
     public static final String KEY_PROFILE = "profile";
     public static final String KEY_PLUS = "plus";
@@ -54,20 +56,33 @@ public final class ModuleResourceLoader {
     private static final Map<String, Boolean> STROKE_ONLY = new HashMap<>();
 
     static {
-        // Standard Material Home (24x24)
-        VECTOR_PATHS.put(KEY_HOME, "M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z");
+        // Authentic iOS / Instagram Rounded Home (24x24)
+        VECTOR_PATHS.put(KEY_HOME, "M12,2.5 C11.4,2.5 10.9,2.8 10.5,3.2 L3.6,9.5 C2.9,10.2 2.5,11.1 2.5,12.0 L2.5,18.8 C2.5,20.6 3.9,22.0 5.7,22.0 L9.3,22.0 C10.1,22.0 10.7,21.4 10.7,20.6 L10.7,15.6 C10.7,14.9 11.3,14.3 12.0,14.3 C12.7,14.3 13.3,14.9 13.3,15.6 L13.3,20.6 C13.3,21.4 13.9,22.0 14.7,22.0 L18.3,22.0 C20.1,22.0 21.5,20.6 21.5,18.8 L21.5,12.0 C21.5,11.1 21.1,10.2 20.4,9.5 L13.5,3.2 C13.1,2.8 12.6,2.5 12,2.5 Z");
+        STROKE_ONLY.put(KEY_HOME, false);
 
-        // Reels / Movie clapperboard (24x24)
-        VECTOR_PATHS.put(KEY_REEL, "M18,4l2,4h-3l-2,-4h-2l2,4h-3l-2,-4H8l2,4H7L5,4H4C2.9,4 2.01,4.9 2.01,6L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V4H18z");
+        // Authentic Instagram Reels Clapper with Play Triangle (24x24)
+        VECTOR_PATHS.put(KEY_REEL, "M6.8,3.5 L17.2,3.5 C19.6,3.5 21.5,5.4 21.5,7.8 L21.5,16.2 C21.5,18.6 19.6,20.5 17.2,20.5 L6.8,20.5 C4.4,20.5 2.5,18.6 2.5,16.2 L2.5,7.8 C2.5,5.4 4.4,3.5 6.8,3.5 Z M10.2,9 L15.8,12 L10.2,15 Z M2.6,8.5 L21.4,8.5 M9.2,3.6 L7.4,8.5 M15.8,3.6 L14.0,8.5");
+        STROKE_ONLY.put(KEY_REEL, true);
 
-        // Heart / Activity (24x24)
-        VECTOR_PATHS.put(KEY_HEART, "M16.5,3c-1.74,0 -3.41,0.81 -4.5,2.09C10.91,3.81 9.24,3 7.5,3C4.42,3 2,5.42 2,8.5c0,3.78 3.4,6.86 8.55,11.54L12,21.35l1.45,-1.32C18.6,15.36 22,12.28 22,8.5C22,5.42 19.58,3 16.5,3z");
+        // Authentic Instagram Paper Plane / Direct / Share (24x24)
+        VECTOR_PATHS.put(KEY_DIRECT, "M21.5,2.5 L10.0,14.0 M21.5,2.5 L14.5,21.5 L10.0,14.0 L2.5,9.5 L21.5,2.5 Z");
+        STROKE_ONLY.put(KEY_DIRECT, true);
 
-        // Profile Avatar (24x24)
-        VECTOR_PATHS.put(KEY_PROFILE, "M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,6c1.93,0 3.5,1.57 3.5,3.5S13.93,13 12,13s-3.5,-1.57 -3.5,-3.5S10.07,6 12,6zM12,20c-2.46,0 -4.68,-1 -6.3,-2.63 0.25,-1.82 3.82,-2.87 6.3,-2.87s6.05,1.05 6.3,2.87C16.68,19 14.46,20 12,20z");
+        // Authentic Modern Search Magnifying Glass (24x24)
+        VECTOR_PATHS.put(KEY_SEARCH, "M10.5,17 C14.09,17 17,14.09 17,10.5 C17,6.91 14.09,4 10.5,4 C6.91,4 4,6.91 4,10.5 C4,14.09 6.91,17 10.5,17 Z M15.5,15.5 L20.5,20.5");
+        STROKE_ONLY.put(KEY_SEARCH, true);
 
-        // Plus FAB (24x24)
-        VECTOR_PATHS.put(KEY_PLUS, "M19,13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z");
+        // Authentic Instagram Rounded Heart (24x24)
+        VECTOR_PATHS.put(KEY_HEART, "M12,21.35 L10.55,20.03 C5.4,15.36 2,12.28 2,8.5 C2,5.42 4.42,3 7.5,3 C9.24,3 10.91,3.81 12,5.09 C13.09,3.81 14.76,3 16.5,3 C19.58,3 22,5.42 22,8.5 C22,12.28 18.6,15.36 13.45,20.04 L12,21.35 Z");
+        STROKE_ONLY.put(KEY_HEART, true);
+
+        // Authentic Instagram Profile Avatar (24x24)
+        VECTOR_PATHS.put(KEY_PROFILE, "M12,11.5 C14.21,11.5 16,9.71 16,7.5 C16,5.29 14.21,3.5 12,3.5 C9.79,3.5 8,5.29 8,7.5 C8,9.71 9.79,11.5 12,11.5 Z M4.5,20.5 C4.5,16.5 8,14.5 12,14.5 C16,14.5 19.5,16.5 19.5,20.5");
+        STROKE_ONLY.put(KEY_PROFILE, true);
+
+        // Center Plus (24x24)
+        VECTOR_PATHS.put(KEY_PLUS, "M12,5 L12,19 M5,12 L19,12");
+        STROKE_ONLY.put(KEY_PLUS, true);
 
         // Grid Post (24x24)
         VECTOR_PATHS.put(KEY_POST, "M20,4H4C2.9,4 2,4.9 2,6v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6C22,4.9 21.1,4 20,4zM8,18H4v-4h4V18zM8,12H4V8h4V12zM14,18h-4v-4h4V18zM14,12h-4V8h4V12zM20,18h-4v-4h4V18zM20,12h-4V8h4V12z");

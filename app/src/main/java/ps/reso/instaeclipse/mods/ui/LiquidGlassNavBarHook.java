@@ -142,6 +142,7 @@ public class LiquidGlassNavBarHook {
             existing = sliderBar;
         } else {
             existing.bringToFront();
+            existing.setLayout(FeatureFlags.liquidGlassNavLayout);
             existing.applyConfiguration(
                     FeatureFlags.liquidGlassStyle,
                     FeatureFlags.liquidGlassOpacity,
@@ -174,41 +175,51 @@ public class LiquidGlassNavBarHook {
         Resources res = activity.getResources();
         String pkg = activity.getPackageName();
         int tabId = 0;
-        switch (index) {
-            case 0: // Home
-                tabId = res.getIdentifier("feed_tab", "id", pkg);
-                break;
-            case 1: // Reel
-                tabId = res.getIdentifier("clips_tab", "id", pkg);
-                if (tabId == 0) tabId = res.getIdentifier("search_tab", "id", pkg);
-                break;
-            case 2: // Heart / Activity
-                tabId = res.getIdentifier("news_tab", "id", pkg);
-                if (tabId == 0) tabId = res.getIdentifier("direct_tab", "id", pkg);
-                if (tabId == 0) tabId = res.getIdentifier("notification_tab", "id", pkg);
-                break;
-            case 3: // Profile
-                tabId = res.getIdentifier("profile_tab", "id", pkg);
-                break;
-        }
+        int layout = FeatureFlags.liquidGlassNavLayout;
 
-        if (tabId != 0) {
-            View tabView = activity.findViewById(tabId);
-            if (tabView != null) {
-                tabView.performClick();
-                return;
+        if (layout == LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE) {
+            // [0] Home, [1] Direct, [2] Create (+), [3] Heart, [4] Profile
+            switch (index) {
+                case 0: // Home
+                    clickFirstMatching(activity, "feed_tab", "home_tab");
+                    break;
+                case 1: // Direct / Messages
+                    tabId = res.getIdentifier("direct_tab", "id", pkg);
+                    if (tabId != 0 && activity.findViewById(tabId) != null) {
+                        activity.findViewById(tabId).performClick();
+                    } else {
+                        clickFirstMatching(activity, "action_bar_inbox_button", "inbox_button", "direct_tab");
+                    }
+                    break;
+                case 2: // Center Create (+)
+                    launchCreation(activity, "camera");
+                    break;
+                case 3: // Heart / Activity
+                    clickFirstMatching(activity, "news_tab", "notification_tab", "activity_tab");
+                    break;
+                case 4: // Profile
+                    clickFirstMatching(activity, "profile_tab", "user_tab");
+                    break;
             }
-        }
-
-        // Secondary fallback
-        if (index == 0) {
-            clickFirstMatching(activity, "feed_tab", "home_tab");
-        } else if (index == 1) {
-            clickFirstMatching(activity, "clips_tab", "search_tab");
-        } else if (index == 2) {
-            clickFirstMatching(activity, "news_tab", "direct_tab", "notification_tab");
-        } else if (index == 3) {
-            clickFirstMatching(activity, "profile_tab", "user_tab");
+        } else {
+            // [0] Home, [1] Reels, [2] Direct, [3] Search, [4] Profile
+            switch (index) {
+                case 0: // Home
+                    clickFirstMatching(activity, "feed_tab", "home_tab");
+                    break;
+                case 1: // Reels
+                    clickFirstMatching(activity, "clips_tab");
+                    break;
+                case 2: // Direct
+                    clickFirstMatching(activity, "direct_tab", "action_bar_inbox_button");
+                    break;
+                case 3: // Search
+                    clickFirstMatching(activity, "search_tab", "explore_tab");
+                    break;
+                case 4: // Profile
+                    clickFirstMatching(activity, "profile_tab", "user_tab");
+                    break;
+            }
         }
     }
 
@@ -230,20 +241,33 @@ public class LiquidGlassNavBarHook {
     private static void syncWithNativeTab(Activity activity, LiquidGlassSliderBarView sliderBar) {
         Resources res = activity.getResources();
         String pkg = activity.getPackageName();
+        int layout = FeatureFlags.liquidGlassNavLayout;
 
         int feedId = res.getIdentifier("feed_tab", "id", pkg);
         int clipsId = res.getIdentifier("clips_tab", "id", pkg);
+        int searchId = res.getIdentifier("search_tab", "id", pkg);
+        int directId = res.getIdentifier("direct_tab", "id", pkg);
         int newsId = res.getIdentifier("news_tab", "id", pkg);
         int profileId = res.getIdentifier("profile_tab", "id", pkg);
 
         if (feedId != 0 && isSelected(activity, feedId)) {
             sliderBar.syncSelectedTab(0);
         } else if (clipsId != 0 && isSelected(activity, clipsId)) {
-            sliderBar.syncSelectedTab(1);
+            if (layout == LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH) {
+                sliderBar.syncSelectedTab(1);
+            }
+        } else if (searchId != 0 && isSelected(activity, searchId)) {
+            if (layout == LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH) {
+                sliderBar.syncSelectedTab(3);
+            }
+        } else if (directId != 0 && isSelected(activity, directId)) {
+            sliderBar.syncSelectedTab(layout == LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE ? 1 : 2);
         } else if (newsId != 0 && isSelected(activity, newsId)) {
-            sliderBar.syncSelectedTab(2);
+            if (layout == LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE) {
+                sliderBar.syncSelectedTab(3);
+            }
         } else if (profileId != 0 && isSelected(activity, profileId)) {
-            sliderBar.syncSelectedTab(3);
+            sliderBar.syncSelectedTab(4);
         }
     }
 
