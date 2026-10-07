@@ -31,7 +31,7 @@ public class StoryCache {
     private static final String INDEX = "ie_story_cache.json";
     private static final String DIR = "ie_stories";
     private static final long TTL_MS = 24L * 60 * 60 * 1000;     // 24 hours
-    private static final long MAX_BYTES = 500L * 1024 * 1024;    // 500 MB cap
+    private static final long MAX_BYTES = 50L * 1024 * 1024;     // 50 MB cap
 
     public static class Entry {
         public final String id, author, url, path;

@@ -56,6 +56,9 @@ import java.util.Scanner;
 import ps.reso.instaeclipse.R;
 import ps.reso.instaeclipse.mods.location.LocationPickerActivity;
 import ps.reso.instaeclipse.ui.theme.ThemeCustomizerActivity;
+import ps.reso.instaeclipse.utils.core.CacheAutoClear;
+import ps.reso.instaeclipse.utils.feature.FeatureFlags;
+import ps.reso.instaeclipse.utils.media.StoryCache;
 
 public class FeaturesFragment extends Fragment {
 
@@ -715,6 +718,7 @@ public class FeaturesFragment extends Fragment {
 
         defs.add(getString(R.string.feat_group_tools));
         defs.add(Arrays.asList(
+                createNav(R.drawable.ic_folder, "#30D158", getString(R.string.ig_dialog_section_auto_clear_cache), this::loadStorageCacheMenu),
                 createNav(R.drawable.ic_settings_gear, A_TOOLS, getString(R.string.ig_dialog_menu_misc), this::loadMiscMenu),
                 createNav(R.drawable.ic_tune, A_TOOLS, getString(R.string.ig_dialog_menu_dev_options), this::loadDevMenu),
                 createClickable(R.drawable.ic_save, A_TOOLS, getString(R.string.ig_dialog_backup_settings), this::backupSettings),
@@ -725,6 +729,77 @@ public class FeaturesFragment extends Fragment {
 
         showMenu(getString(R.string.features), defs);
         currentMenu = "main";
+    }
+
+    private void loadStorageCacheMenu() {
+        List<Object> defs = new ArrayList<>();
+
+        defs.add(getString(R.string.ig_dialog_section_auto_clear_cache));
+        defs.add(Arrays.asList(
+                createSwitch(R.drawable.ic_timer, "#30D158", getString(R.string.ig_dialog_auto_clear_cache), "autoClearCache"),
+                createClickable(R.drawable.ic_folder, "#30D158",
+                        getString(R.string.ig_dialog_auto_clear_cache_size, getCacheLimitMb()), this::showCacheLimitDialog),
+                createSwitch(R.drawable.ic_download, "#FF9F0A", getString(R.string.ig_dialog_misc_cache_stories), "cacheStories")
+        ));
+
+        defs.add(getString(R.string.ig_dialog_clear_cache));
+        defs.add(Arrays.asList(
+                createClickable(R.drawable.ic_delete, "#FF453A", getString(R.string.ig_dialog_clear_cache_now), this::clearInstagramCacheNow),
+                createClickable(R.drawable.ic_delete, "#FF9F0A", getString(R.string.ig_story_cache_clear), this::clearStoryCacheNow)
+        ));
+
+        showMenu(getString(R.string.ig_dialog_section_auto_clear_cache), defs);
+        currentMenu = "storage_cache";
+    }
+
+    private int getCacheLimitMb() {
+        return localCache.getInt("autoClearCacheSizeMb", FeatureFlags.autoClearCacheSizeMb);
+    }
+
+    private void showCacheLimitDialog() {
+        final int[] limits = {50, 100, 150, 200, 500};
+        final String[] labels = {"50 MB", "100 MB", "150 MB (Recommended)", "200 MB", "500 MB"};
+        int current = getCacheLimitMb();
+        int selectedIndex = 2;
+        for (int i = 0; i < limits.length; i++) {
+            if (limits[i] == current) { selectedIndex = i; break; }
+        }
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.ig_dialog_section_auto_clear_cache)
+                .setSingleChoiceItems(labels, selectedIndex, (dialog, which) -> {
+                    int chosen = limits[which];
+                    FeatureFlags.autoClearCacheSizeMb = chosen;
+                    localCache.edit().putInt("autoClearCacheSizeMb", chosen).commit();
+                    makeLocalCacheWorldReadable();
+                    Intent intent = new Intent("ps.reso.instaeclipse.ACTION_UPDATE_PREF_INT");
+                    intent.putExtra("key", "autoClearCacheSizeMb");
+                    intent.putExtra("value", chosen);
+                    requireContext().sendBroadcast(intent);
+                    dialog.dismiss();
+                    if ("storage_cache".equals(currentMenu)) {
+                        loadStorageCacheMenu();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void clearInstagramCacheNow() {
+        Intent intent = new Intent("ps.reso.instaeclipse.ACTION_CLEAR_CACHE");
+        requireContext().sendBroadcast(intent);
+
+        try {
+            CacheAutoClear.clearNow(requireContext());
+        } catch (Throwable ignored) {}
+
+        Toast.makeText(requireContext(), getString(R.string.ig_story_cache_cleared), Toast.LENGTH_SHORT).show();
+    }
+
+    private void clearStoryCacheNow() {
+        try {
+            StoryCache.clearAll();
+        } catch (Throwable ignored) {}
+        Toast.makeText(requireContext(), getString(R.string.ig_story_cache_cleared), Toast.LENGTH_SHORT).show();
     }
 
     private void loadDevMenu() {

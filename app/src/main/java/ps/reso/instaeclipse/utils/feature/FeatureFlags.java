@@ -19,8 +19,8 @@ public class FeatureFlags {
     public static boolean keepUnsentMessages = false;
 
     // Auto-clear cache
-    public static boolean autoClearCache = false;
-    public static int autoClearCacheSizeMb = 100;
+    public static boolean autoClearCache = true;
+    public static int autoClearCacheSizeMb = 150;
 
     // Remove Meta AI (#179)
     public static boolean removeMetaAI = false;

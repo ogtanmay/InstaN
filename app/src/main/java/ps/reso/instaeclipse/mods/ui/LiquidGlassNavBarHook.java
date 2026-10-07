@@ -137,9 +137,11 @@ public class LiquidGlassNavBarHook {
                     ViewGroup.LayoutParams.MATCH_PARENT
             );
             decor.addView(sliderBar, lp);
+            sliderBar.bringToFront();
             sSliderBars.put(activity, sliderBar);
             existing = sliderBar;
         } else {
+            existing.bringToFront();
             existing.applyConfiguration(
                     FeatureFlags.liquidGlassStyle,
                     FeatureFlags.liquidGlassOpacity,

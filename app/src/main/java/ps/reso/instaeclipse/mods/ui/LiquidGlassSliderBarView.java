@@ -32,8 +32,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import ps.reso.instaeclipse.R;
+import ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader;
 import ps.reso.instaeclipse.utils.feature.FeatureFlags;
 import ps.reso.instaeclipse.utils.log.ModuleLog;
 
@@ -174,6 +177,12 @@ public class LiquidGlassSliderBarView extends FrameLayout {
                 R.drawable.ic_heart,
                 R.drawable.ic_profile
         };
+        String[] fallbackKeys = {
+                ModuleResourceLoader.KEY_HOME,
+                ModuleResourceLoader.KEY_REEL,
+                ModuleResourceLoader.KEY_HEART,
+                ModuleResourceLoader.KEY_PROFILE
+        };
 
         for (int i = 0; i < 4; i++) {
             final int index = i;
@@ -185,7 +194,9 @@ public class LiquidGlassSliderBarView extends FrameLayout {
             int iconSize = dp(24);
             FrameLayout.LayoutParams ivLp = new FrameLayout.LayoutParams(iconSize, iconSize, Gravity.CENTER);
             iv.setLayoutParams(ivLp);
-            iv.setImageResource(iconDrawables[i]);
+            android.graphics.drawable.Drawable tabIcon = ModuleResourceLoader.loadIcon(
+                    context, iconDrawables[i], fallbackKeys[i], i == 0 ? 0xFFFFFFFF : 0xA5FFFFFF);
+            iv.setImageDrawable(tabIcon);
             iv.setColorFilter(i == 0 ? 0xFFFFFFFF : 0xA5FFFFFF);
             tabContainer.addView(iv);
             tabIconViews[i] = iv;
@@ -213,7 +224,9 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         fabIcon = new ImageView(context);
         FrameLayout.LayoutParams fabIconLp = new FrameLayout.LayoutParams(dp(24), dp(24), Gravity.CENTER);
         fabIcon.setLayoutParams(fabIconLp);
-        fabIcon.setImageResource(R.drawable.ic_plus);
+        android.graphics.drawable.Drawable plusIcon = ModuleResourceLoader.loadIcon(
+                context, R.drawable.ic_plus, ModuleResourceLoader.KEY_PLUS, 0xFFFFFFFF);
+        fabIcon.setImageDrawable(plusIcon);
         fabIcon.setColorFilter(0xFFFFFFFF);
         fabCreate.addView(fabIcon);
 
@@ -222,8 +235,68 @@ public class LiquidGlassSliderBarView extends FrameLayout {
 
         addView(bottomRow);
 
+        // Window insets listener: elevate bottom dock above system navigation bar
+        ViewCompat.setOnApplyWindowInsetsListener(this, (v, insets) -> {
+            int navBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            if (navBottom == 0) {
+                navBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            }
+            updateBottomMargin(navBottom);
+            return insets;
+        });
+
         // 3. Popup Creation Menu (Liquid Glass card aligned above the FAB)
         buildPopupMenu(context);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        int navHeight = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            android.view.WindowInsets insets = getRootWindowInsets();
+            if (insets != null) {
+                navHeight = insets.getInsets(android.view.WindowInsets.Type.navigationBars()).bottom;
+            }
+        }
+        if (navHeight == 0) {
+            navHeight = getNavigationBarHeight(getContext());
+        }
+        updateBottomMargin(navHeight);
+    }
+
+    public void updateBottomMargin(int navBarHeightPx) {
+        if (bottomRow == null) return;
+        LayoutParams lp = (LayoutParams) bottomRow.getLayoutParams();
+        if (lp != null) {
+            int targetMargin = navBarHeightPx > 0 ? (navBarHeightPx + dp(10)) : dp(16);
+            if (lp.bottomMargin != targetMargin) {
+                lp.bottomMargin = targetMargin;
+                bottomRow.setLayoutParams(lp);
+            }
+        }
+        if (popupMenu != null) {
+            LayoutParams pLp = (LayoutParams) popupMenu.getLayoutParams();
+            if (pLp != null) {
+                int barHeight = dp(FeatureFlags.liquidGlassHeight > 0 ? FeatureFlags.liquidGlassHeight : 56);
+                int baseMargin = navBarHeightPx > 0 ? (navBarHeightPx + dp(10)) : dp(16);
+                int targetMenuBottom = baseMargin + barHeight + dp(14);
+                if (pLp.bottomMargin != targetMenuBottom) {
+                    pLp.bottomMargin = targetMenuBottom;
+                    popupMenu.setLayoutParams(pLp);
+                }
+            }
+        }
+    }
+
+    private static int getNavigationBarHeight(Context context) {
+        try {
+            int resourceId = context.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+            if (resourceId > 0) {
+                return context.getResources().getDimensionPixelSize(resourceId);
+            }
+        } catch (Throwable ignored) {}
+        return 0;
     }
 
     public void applyConfiguration(int style, int opacity, int widthMargin, int height, int cornerRadius, boolean borderSheen, boolean showFab) {
@@ -352,12 +425,12 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         popupMenu.setClipToOutline(true);
 
         // Items matching the user screenshot: Reel, Post, Story, Story highlight, Live, AI
-        addMenuItem(context, R.drawable.ic_movie, "Reel", "reel");
-        addMenuItem(context, R.drawable.ic_grid_post, "Post", "post");
-        addMenuItem(context, R.drawable.ic_story_dashed, "Story", "story");
-        addMenuItem(context, R.drawable.ic_story_highlight, "Story highlight", "highlight");
-        addMenuItem(context, R.drawable.ic_live, "Live", "live");
-        addMenuItem(context, R.drawable.ic_sparkle, "AI", "ai");
+        addMenuItem(context, R.drawable.ic_movie, ModuleResourceLoader.KEY_REEL, "Reel", "reel");
+        addMenuItem(context, R.drawable.ic_grid_post, ModuleResourceLoader.KEY_POST, "Post", "post");
+        addMenuItem(context, R.drawable.ic_story_dashed, ModuleResourceLoader.KEY_STORY, "Story", "story");
+        addMenuItem(context, R.drawable.ic_story_highlight, ModuleResourceLoader.KEY_HIGHLIGHT, "Story highlight", "highlight");
+        addMenuItem(context, R.drawable.ic_live, ModuleResourceLoader.KEY_LIVE, "Live", "live");
+        addMenuItem(context, R.drawable.ic_sparkle, ModuleResourceLoader.KEY_AI, "AI", "ai");
 
         popupMenu.setVisibility(GONE);
         popupMenu.setScaleX(0.7f);
@@ -366,7 +439,7 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         addView(popupMenu);
     }
 
-    private void addMenuItem(Context context, int iconRes, String title, String actionKey) {
+    private void addMenuItem(Context context, int iconRes, String fallbackKey, String title, String actionKey) {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -385,7 +458,9 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         LinearLayout.LayoutParams ivLp = new LinearLayout.LayoutParams(iconSize, iconSize);
         ivLp.rightMargin = dp(14);
         iv.setLayoutParams(ivLp);
-        iv.setImageResource(iconRes);
+        android.graphics.drawable.Drawable itemIcon = ModuleResourceLoader.loadIcon(
+                context, iconRes, fallbackKey, 0xFFFFFFFF);
+        iv.setImageDrawable(itemIcon);
         iv.setColorFilter(0xFFFFFFFF);
         row.addView(iv);
 

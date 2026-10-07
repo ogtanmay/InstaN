@@ -151,8 +151,8 @@ public class SettingsManager {
         FeatureFlags.keepEphemeralMessages = prefs.getBoolean("keepEphemeralMessages", false);
         FeatureFlags.permanentViewMode = prefs.getBoolean("permanentViewMode", false);
         FeatureFlags.keepUnsentMessages = prefs.getBoolean("keepUnsentMessages", false);
-        FeatureFlags.autoClearCache = prefs.getBoolean("autoClearCache", false);
-        FeatureFlags.autoClearCacheSizeMb = prefs.getInt("autoClearCacheSizeMb", 500);
+        FeatureFlags.autoClearCache = prefs.getBoolean("autoClearCache", true);
+        FeatureFlags.autoClearCacheSizeMb = prefs.getInt("autoClearCacheSizeMb", 150);
         FeatureFlags.removeMetaAI = prefs.getBoolean("removeMetaAI", false);
         FeatureFlags.lockDirectMessages = prefs.getBoolean("lockDirectMessages", false);
         FeatureFlags.lockDirectPasscode = prefs.getString("lockDirectPasscode", "");

@@ -42,7 +42,12 @@ public class CacheAutoClear {
         installed = true;
         final Application app = (Application) appCtx;
         app.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
-            @Override public void onActivityStarted(Activity a) { startedActivities++; }
+            @Override public void onActivityStarted(Activity a) {
+                startedActivities++;
+                if (startedActivities == 1) {
+                    checkAndPruneIfCritical(app);
+                }
+            }
             @Override public void onActivityStopped(Activity a) {
                 startedActivities--;
                 if (startedActivities <= 0) {
@@ -59,37 +64,66 @@ public class CacheAutoClear {
         ModuleLog.line("(IE|CacheAutoClear) background listener installed");
     }
 
+    private static void checkAndPruneIfCritical(Context app) {
+        if (!FeatureFlags.autoClearCache) return;
+        long now = System.currentTimeMillis();
+        if (now - lastClear < 60_000) return;
+        new Thread(() -> performPrune(app, false), "ie-cache-check").start();
+    }
+
     private static void onAppBackgrounded(Context app) {
         if (!FeatureFlags.autoClearCache) return;
         long now = System.currentTimeMillis();
-        if (now - lastClear < 30_000) return;   // avoid repeat clears on quick app-switches
+        if (now - lastClear < 20_000) return;   // avoid repeat clears on quick app-switches
         lastClear = now;
-        new Thread(() -> {
-            try {
-                int limitMb = FeatureFlags.autoClearCacheSizeMb > 0 ? FeatureFlags.autoClearCacheSizeMb : 100;
-                long limit = (long) limitMb * 1024 * 1024;
+        new Thread(() -> performPrune(app, true), "ie-cacheclear").start();
+    }
 
-                // Measure with the OS's authoritative cache figure (matches what Android Settings
-                // shows and counts cache the app registered on all volumes); fall back to summing
-                // the cache dirs directly when StorageStatsManager is unavailable.
-                File[] targets = cacheTargets(app);
-                long osCache = osCacheBytes(app);
-                long dirTotal = 0;
-                for (File t : targets) dirTotal += dirSize(t);
-                long measured = osCache > 0 ? osCache : dirTotal;
+    private static void performPrune(Context app, boolean backgrounded) {
+        try {
+            int limitMb = FeatureFlags.autoClearCacheSizeMb > 0 ? FeatureFlags.autoClearCacheSizeMb : 150;
+            long limit = (long) limitMb * 1024 * 1024;
 
-                ModuleLog.line("(IE|CacheAutoClear) backgrounded — cache=" + (measured / (1024 * 1024))
-                        + "MB (limit " + limitMb + "MB)");
+            File[] targets = cacheTargets(app);
+            long osCache = osCacheBytes(app);
+            long dirTotal = 0;
+            for (File t : targets) dirTotal += dirSize(t);
+            long measured = osCache > 0 ? Math.max(osCache, dirTotal) : dirTotal;
 
-                if (measured >= limit) {
-                    long freed = 0;
-                    for (File t : targets) { freed += dirSize(t); clearContents(t); }
-                    ModuleLog.line("(IE|CacheAutoClear) ✅ cleared ~" + (freed / (1024 * 1024)) + "MB");
-                }
-            } catch (Throwable t) {
-                ModuleLog.line("(IE|CacheAutoClear) ❌ " + t);
+            ModuleLog.line("(IE|CacheAutoClear) " + (backgrounded ? "backgrounded" : "started")
+                    + " — cache=" + (measured / (1024 * 1024)) + "MB (limit " + limitMb + "MB)");
+
+            if (measured >= limit) {
+                long freed = 0;
+                for (File t : targets) { freed += dirSize(t); clearContents(t); }
+                lastClear = System.currentTimeMillis();
+                ModuleLog.line("(IE|CacheAutoClear) ✅ cleared ~" + (freed / (1024 * 1024)) + "MB");
             }
-        }, "ie-cacheclear").start();
+        } catch (Throwable t) {
+            ModuleLog.line("(IE|CacheAutoClear) ❌ " + t);
+        }
+    }
+
+    /**
+     * Immediately clears Instagram's cache and junk directories on demand.
+     * Returns the approximate number of bytes freed.
+     */
+    public static long clearNow(Context app) {
+        if (app == null) return 0;
+        try {
+            File[] targets = cacheTargets(app);
+            long freed = 0;
+            for (File t : targets) {
+                freed += dirSize(t);
+                clearContents(t);
+            }
+            lastClear = System.currentTimeMillis();
+            ModuleLog.line("(IE|CacheAutoClear) Manual clear: freed ~" + (freed / (1024 * 1024)) + "MB");
+            return freed;
+        } catch (Throwable t) {
+            ModuleLog.line("(IE|CacheAutoClear) Manual clear failed: " + t);
+            return 0;
+        }
     }
 
     /**
@@ -107,11 +141,41 @@ public class CacheAutoClear {
             File[] kids = files != null ? files.listFiles() : null;
             if (kids != null) {
                 for (File k : kids) {
-                    if (k.isDirectory() && k.getName().toLowerCase().contains("cache")) addIfDir(out, k);
+                    if (k.isDirectory() && isDisposableDirName(k.getName())) {
+                        addIfDir(out, k);
+                    }
                 }
             }
         } catch (Throwable ignored) {}
+
+        // App-level webview cache
+        try {
+            File dataDir = app.getApplicationInfo().dataDir != null ? new File(app.getApplicationInfo().dataDir) : null;
+            if (dataDir != null && dataDir.exists()) {
+                File webviewCache = new File(dataDir, "app_webview/Default/HTTP Cache");
+                if (webviewCache.exists() && webviewCache.isDirectory()) {
+                    addIfDir(out, webviewCache);
+                }
+            }
+        } catch (Throwable ignored) {}
+
         return out.toArray(new File[0]);
+    }
+
+    private static boolean isDisposableDirName(String name) {
+        if (name == null) return false;
+        String lower = name.toLowerCase();
+        return lower.contains("cache")
+                || lower.contains("temp")
+                || lower.contains("tmp")
+                || lower.contains("trash")
+                || lower.contains("minidump")
+                || lower.contains("crash_dump")
+                || lower.contains("analytics")
+                || lower.contains("exoplayer")
+                || lower.contains("browser_proc")
+                || lower.contains("webview")
+                || lower.equals("ie_stories");
     }
 
     private static void addIfDir(java.util.Set<File> set, File d) {

@@ -562,6 +562,10 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                 } else if (CommonUtils.ACTION_CLEAR_LOGS.equals(action)) {
                     Logging.clear();
 
+                } else if ("ps.reso.instaeclipse.ACTION_CLEAR_CACHE".equals(action)) {
+                    ModuleLog.line("(InstaEclipse) Sync: Companion app requested cache clear.");
+                    ps.reso.instaeclipse.utils.core.CacheAutoClear.clearNow(ctx);
+
                 } else if ("ps.reso.instaeclipse.ACTION_REQUEST_PREFS".equals(action)) {
                     ModuleLog.line("(InstaEclipse) Sync: Companion app requested current preferences.");
 
@@ -631,6 +635,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         filter.addAction("ps.reso.instaeclipse.ACTION_UPDATE_PREF_INT");
         filter.addAction(CommonUtils.ACTION_REQUEST_LOGS);
         filter.addAction(CommonUtils.ACTION_CLEAR_LOGS);
+        filter.addAction("ps.reso.instaeclipse.ACTION_CLEAR_CACHE");
         filter.addAction("ps.reso.instaeclipse.ACTION_REQUEST_PREFS");
         filter.addAction("ps.reso.instaeclipse.ACTION_EXPORT_CONFIG");
         filter.addAction("ps.reso.instaeclipse.ACTION_BACKUP_SETTINGS");
