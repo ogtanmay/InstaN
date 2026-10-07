@@ -52,6 +52,9 @@ public class LiquidGlassNavBarHook {
 
     public static void watchActivity(final Activity activity) {
         if (activity == null || activity.isFinishing()) return;
+        if (activity.getPackageName().equals("ps.reso.instaeclipse") || activity instanceof ps.reso.instaeclipse.MainActivity) {
+            return;
+        }
         String name = activity.getClass().getName();
         if (!name.contains("InstagramMainActivity") && !name.contains("MainActivity")) return;
 

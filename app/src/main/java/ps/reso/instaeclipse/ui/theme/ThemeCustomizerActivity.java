@@ -214,11 +214,13 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         navFab = cache().getBoolean(KEY_NAV_FAB, FeatureFlags.liquidGlassShowFab);
         navQuickActions = cache().getBoolean(KEY_NAV_QUICK_ACTIONS, FeatureFlags.enableLiquidGlassQuickActions);
 
-        navEnableSwitch.setChecked(navEnabled);
-        navEnableSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            FeatureFlags.enableLiquidGlassNavBar = isChecked;
-            persistNavBoolean(KEY_NAV_ENABLED, isChecked);
-        });
+        if (navEnableSwitch != null) {
+            navEnableSwitch.setChecked(navEnabled);
+            navEnableSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                FeatureFlags.enableLiquidGlassNavBar = isChecked;
+                persistNavBoolean(KEY_NAV_ENABLED, isChecked);
+            });
+        }
 
         if (navPreviewSlider != null) {
             navPreviewSlider.setPreviewMode(true);
@@ -246,89 +248,99 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         }
 
         // Opacity
-        navOpacitySlider.setProgress(navOpacity);
-        updateOpacityLabel();
-        navOpacitySlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                navOpacity = Math.max(10, progress);
-                updateOpacityLabel();
-                updateNavPreview();
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                FeatureFlags.liquidGlassOpacity = navOpacity;
-                persistNavInt(KEY_NAV_OPACITY, navOpacity);
-            }
-        });
+        if (navOpacitySlider != null) {
+            navOpacitySlider.setProgress(navOpacity);
+            updateOpacityLabel();
+            navOpacitySlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    navOpacity = Math.max(10, progress);
+                    updateOpacityLabel();
+                    updateNavPreview();
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    FeatureFlags.liquidGlassOpacity = navOpacity;
+                    persistNavInt(KEY_NAV_OPACITY, navOpacity);
+                }
+            });
+        }
 
         // Margin / Width
-        navMarginSlider.setProgress(navMargin);
-        updateMarginLabel();
-        navMarginSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                navMargin = progress;
-                updateMarginLabel();
-                updateNavPreview();
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                FeatureFlags.liquidGlassWidthMargin = navMargin;
-                persistNavInt(KEY_NAV_MARGIN, navMargin);
-            }
-        });
+        if (navMarginSlider != null) {
+            navMarginSlider.setProgress(navMargin);
+            updateMarginLabel();
+            navMarginSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    navMargin = progress;
+                    updateMarginLabel();
+                    updateNavPreview();
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    FeatureFlags.liquidGlassWidthMargin = navMargin;
+                    persistNavInt(KEY_NAV_MARGIN, navMargin);
+                }
+            });
+        }
 
         // Height (48 - 68)
-        navHeightSlider.setProgress(Math.max(0, Math.min(20, navHeight - 48)));
-        updateHeightLabel();
-        navHeightSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                navHeight = 48 + progress;
-                updateHeightLabel();
-                updateNavPreview();
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                FeatureFlags.liquidGlassHeight = navHeight;
-                persistNavInt(KEY_NAV_HEIGHT, navHeight);
-            }
-        });
+        if (navHeightSlider != null) {
+            navHeightSlider.setProgress(Math.max(0, Math.min(20, navHeight - 48)));
+            updateHeightLabel();
+            navHeightSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    navHeight = 48 + progress;
+                    updateHeightLabel();
+                    updateNavPreview();
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    FeatureFlags.liquidGlassHeight = navHeight;
+                    persistNavInt(KEY_NAV_HEIGHT, navHeight);
+                }
+            });
+        }
 
         // Corner Radius (8 - 34)
-        navRadiusSlider.setProgress(Math.max(0, Math.min(26, navRadius - 8)));
-        updateRadiusLabel();
-        navRadiusSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                navRadius = 8 + progress;
-                updateRadiusLabel();
-                updateNavPreview();
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                FeatureFlags.liquidGlassCornerRadius = navRadius;
-                persistNavInt(KEY_NAV_RADIUS, navRadius);
-            }
-        });
+        if (navRadiusSlider != null) {
+            navRadiusSlider.setProgress(Math.max(0, Math.min(26, navRadius - 8)));
+            updateRadiusLabel();
+            navRadiusSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    navRadius = 8 + progress;
+                    updateRadiusLabel();
+                    updateNavPreview();
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    FeatureFlags.liquidGlassCornerRadius = navRadius;
+                    persistNavInt(KEY_NAV_RADIUS, navRadius);
+                }
+            });
+        }
 
         // Switches
-        navSheenSwitch.setChecked(navSheen);
-        navSheenSwitch.setOnCheckedChangeListener((bv, isChecked) -> {
-            navSheen = isChecked;
-            FeatureFlags.liquidGlassBorderSheen = isChecked;
-            persistNavBoolean(KEY_NAV_SHEEN, isChecked);
-            updateNavPreview();
-        });
+        if (navSheenSwitch != null) {
+            navSheenSwitch.setChecked(navSheen);
+            navSheenSwitch.setOnCheckedChangeListener((bv, isChecked) -> {
+                navSheen = isChecked;
+                FeatureFlags.liquidGlassBorderSheen = isChecked;
+                persistNavBoolean(KEY_NAV_SHEEN, isChecked);
+                updateNavPreview();
+            });
+        }
 
         if (navChromaticSwitch != null) {
             navChromaticSwitch.setChecked(navChromatic);
@@ -341,7 +353,9 @@ public class ThemeCustomizerActivity extends AppCompatActivity implements Advanc
         }
 
         // Reset
-        navResetButton.setOnClickListener(v -> resetNavDefaults());
+        if (navResetButton != null) {
+            navResetButton.setOnClickListener(v -> resetNavDefaults());
+        }
 
         updateNavPreview();
     }

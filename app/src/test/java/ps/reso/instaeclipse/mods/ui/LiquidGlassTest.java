@@ -46,6 +46,12 @@ public class LiquidGlassTest {
         assertEquals(2, LiquidGlassSliderBarView.TAB_MESSAGES);
         assertEquals(3, LiquidGlassSliderBarView.TAB_PROFILE);
 
+        // Test fallback vector keys
+        assertEquals("home", ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader.KEY_HOME);
+        assertEquals("reel", ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader.KEY_REEL);
+        assertEquals("direct", ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader.KEY_DIRECT);
+        assertEquals("profile", ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader.KEY_PROFILE);
+
         FeatureFlags.liquidGlassNavLayout = LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE;
         FeatureFlags.liquidGlassChromaticLens = true;
         assertEquals(0, FeatureFlags.liquidGlassNavLayout);

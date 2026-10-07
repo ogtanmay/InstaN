@@ -162,7 +162,11 @@ public final class ModuleResourceLoader {
         private final boolean isStroke;
 
         public VectorGlyphDrawable(String pathData, int color, boolean isStroke) {
-            this.basePath = PathParser.createPathFromPathData(pathData);
+            Path p = null;
+            try {
+                p = PathParser.createPathFromPathData(pathData);
+            } catch (Throwable ignored) {}
+            this.basePath = p;
             this.color = color;
             this.isStroke = isStroke;
             paint.setColor(color);
