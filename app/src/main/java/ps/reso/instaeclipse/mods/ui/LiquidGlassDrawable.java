@@ -22,8 +22,8 @@ import ps.reso.instaeclipse.utils.feature.FeatureFlags;
  * for bottom navigation bars.
  *
  * Features:
- * - Multi-stop translucent glass gradient matching iOS 27 / VisionOS liquid glass aesthetics
- * - Specular reflection rim with top-weighted refraction highlight
+ * - Crystal clear high-refraction liquid glass gradient matching iOS 27 / VisionOS aesthetics
+ * - Clean specular reflection without harsh or thick opaque borders
  * - Inner optical sheen arc simulating convex fluid glass curvature
  * - 6 curated styles: Floating Pill, Docked Glass, Aurora Neon, Obsidian Dark, Crystal Clear, iOS 27 Liquid Glass
  * - Zero-allocation draw() method to prevent GC pauses on 2GB RAM devices
@@ -124,7 +124,8 @@ public class LiquidGlassDrawable extends Drawable {
         float height = boundsF.height();
         boolean dark = isDarkMode();
 
-        float strokeWidth = dp(1.35f);
+        // Delicate, ultra-thin polished stroke for crystal clarity
+        float strokeWidth = dp(0.9f);
         strokePaint.setStrokeWidth(strokeWidth);
         float halfStroke = strokeWidth / 2f;
         strokeBoundsF.set(boundsF.left + halfStroke, boundsF.top + halfStroke,
@@ -139,7 +140,6 @@ public class LiquidGlassDrawable extends Drawable {
             cornerRadii[4] = 0f; cornerRadii[5] = 0f;
             cornerRadii[6] = 0f; cornerRadii[7] = 0f;
         } else {
-            // Pill shape: rounded by customCornerRadius or height/2
             cornerRadius = customCornerRadius > 0 ? dp(customCornerRadius) : Math.min(height / 2f, dp(28f));
             for (int i = 0; i < 8; i++) cornerRadii[i] = cornerRadius;
         }
@@ -152,7 +152,7 @@ public class LiquidGlassDrawable extends Drawable {
         strokePath.addRoundRect(strokeBoundsF, cornerRadii, Path.Direction.CW);
 
         innerRect.set(boundsF);
-        float inset = dp(1.8f);
+        float inset = dp(1.5f);
         innerRect.inset(inset, inset);
         innerPath.reset();
         innerPath.addRoundRect(innerRect, cornerRadii, Path.Direction.CW);
@@ -164,98 +164,96 @@ public class LiquidGlassDrawable extends Drawable {
 
         switch (style) {
             case STYLE_AURORA:
-                // Neon magenta/cyan holographic glass
                 bodyColors = new int[]{
-                        0x557C3AED, // Top vibrant violet
-                        0x324F46E5, // Mid electric indigo
-                        0x3806B6D4, // Bottom neon cyan
-                        0x220284C7
+                        0x447C3AED,
+                        0x284F46E5,
+                        0x2E06B6D4,
+                        0x1C0284C7
                 };
                 bodyPositions = new float[]{0.0f, 0.45f, 0.85f, 1.0f};
                 strokeColors = new int[]{
-                        0xD5C084FC, // Bright lavender-pink sheen
-                        0x80818CF8,
-                        0x5022D3EE,
-                        0x7038BDF8
+                        0x80C084FC,
+                        0x50818CF8,
+                        0x3022D3EE,
+                        0x4038BDF8
                 };
                 strokePositions = new float[]{0.0f, 0.35f, 0.7f, 1.0f};
                 break;
 
             case STYLE_OBSIDIAN:
-                // Stealth smoky obsidian glass
                 bodyColors = new int[]{
-                        0x5E1E2028, // Top smoke
-                        0x4012141B,
-                        0x460B0C10,
-                        0x35060709
+                        0x4C1E2028,
+                        0x3212141B,
+                        0x360B0C10,
+                        0x2A060709
                 };
                 bodyPositions = new float[]{0.0f, 0.4f, 0.8f, 1.0f};
                 strokeColors = new int[]{
-                        0x606B7280, // Subtle titanium specular rim
-                        0x354B5563,
-                        0x20374151,
-                        0x281F2937
+                        0x456B7280,
+                        0x254B5563,
+                        0x18374151,
+                        0x201F2937
                 };
                 strokePositions = new float[]{0.0f, 0.3f, 0.7f, 1.0f};
                 break;
 
             case STYLE_CRYSTAL_CLEAR:
-                // Ultra minimal high-refraction clear liquid glass
+                // Pure crystal liquid glass: crystal clear transparency
                 if (dark) {
                     bodyColors = new int[]{
-                            0x28FFFFFF,
-                            0x14FFFFFF,
-                            0x14000000,
-                            0x20000000
+                            0x20FFFFFF, // Diamond light glint
+                            0x0DFFFFFF, // Transparent fluid water
+                            0x0C000000,
+                            0x18000000
                     };
                 } else {
                     bodyColors = new int[]{
-                            0x42FFFFFF,
-                            0x24FFFFFF,
-                            0x1CE2E8F0,
-                            0x26CBD5E1
+                            0x32FFFFFF,
+                            0x18FFFFFF,
+                            0x12E2E8F0,
+                            0x1CCBD5E1
                     };
                 }
                 bodyPositions = new float[]{0.0f, 0.35f, 0.75f, 1.0f};
                 strokeColors = new int[]{
-                        0x90FFFFFF,
-                        0x40FFFFFF,
-                        0x18FFFFFF,
-                        0x25FFFFFF
+                        0x60FFFFFF,
+                        0x28FFFFFF,
+                        0x10FFFFFF,
+                        0x18FFFFFF
                 };
                 strokePositions = new float[]{0.0f, 0.25f, 0.7f, 1.0f};
                 break;
 
             case STYLE_IOS27_LIQUID:
-                // Ultra-futuristic iOS 27 Liquid Glass with crystal optical translucency and chromatic dispersion
+                // Crystal clear iOS 27 liquid glass with natural fluid refraction and light caustics
                 if (dark) {
                     bodyColors = new int[]{
-                            0x2A1E293B, // Ultra-translucent crystal sapphire slate (16% opacity)
-                            0x180F172A, // Mid-depth fluid glass refraction (9% opacity)
-                            0x10020617, // Deep inner volume refraction (6% opacity)
-                            0x1E1E1B4B  // Subtle chromatic iridescent bottom base (12% opacity)
+                            0x20FFFFFF, // Pure optical diamond apex
+                            0x121E293B, // Crystal clear fluid glass body (7% opacity)
+                            0x0A0F172A, // Translucent fluid refraction
+                            0x161E1B4B  // Delicate iridescent refraction tint
                     };
-                    bodyPositions = new float[]{0.0f, 0.35f, 0.70f, 1.0f};
+                    bodyPositions = new float[]{0.0f, 0.30f, 0.70f, 1.0f};
                     strokeColors = new int[]{
-                            0xFAFFFFFF, // Pure diamond apex specular point (98% white)
-                            0xB8C4B5FD, // Prismatic violet-lavender dispersion
-                            0x8538BDF8, // Refractive cyan caustic highlight
-                            0x7E818CF8  // Subsurface ambient rim
+                            0x90FFFFFF, // Soft polished specular highlight at top edge
+                            0x50C4B5FD, // Prismatic sky-violet dispersion
+                            0x3538BDF8, // Soft cyan caustic
+                            0x40818CF8
                     };
                     strokePositions = new float[]{0.0f, 0.28f, 0.65f, 1.0f};
                 } else {
                     bodyColors = new int[]{
-                            0x32FFFFFF, // Pure crystal fluid glass (19% opacity - crystal clear!)
-                            0x1CF8FAFC, // Liquid water reflection (11% opacity)
-                            0x14E2E8F0, // Translucent optical glass (8% opacity)
-                            0x1EE0E7FF  // Delicate sky-violet refraction base (12% opacity)
+                            0x28FFFFFF, // Crystal clear fluid glass
+                            0x14F8FAFC, // Liquid water reflection (8% opacity)
+                            0x0DE2E8F0, // Pure translucent optical glass
+                            0x16E0E7FF  // Delicate sky-violet refraction base
                     };
-                    bodyPositions = new float[]{0.0f, 0.35f, 0.70f, 1.0f};
+                    bodyPositions = new float[]{0.0f, 0.30f, 0.70f, 1.0f};
                     strokeColors = new int[]{
-                            0xFAFFFFFF, // Diamond apex specular reflection (98% white)
-                            0xB8E0E7FF, // Prismatic sky-indigo dispersion
-                            0x8538BDF8, // Caustic light refraction
-                            0x88A5B4FC  // Delicate iridescent edge
+                            0x90FFFFFF, // Delicate top specular glint
+                            0x55E0E7FF, // Soft sky dispersion
+                            0x3538BDF8,
+                            0x40A5B4FC
                     };
                     strokePositions = new float[]{0.0f, 0.28f, 0.65f, 1.0f};
                 }
@@ -266,32 +264,32 @@ public class LiquidGlassDrawable extends Drawable {
             default:
                 if (dark) {
                     bodyColors = new int[]{
-                            0x3A374151, // Soft translucent slate
-                            0x261F2937,
-                            0x2C111827,
-                            0x320B0F17
+                            0x2E374151,
+                            0x1C1F2937,
+                            0x20111827,
+                            0x260B0F17
                     };
                     bodyPositions = new float[]{0.0f, 0.4f, 0.75f, 1.0f};
                     strokeColors = new int[]{
-                            0x95FFFFFF, // Bright specular rim at top edge
-                            0x4594A3B8,
-                            0x2064748B,
-                            0x35475569
+                            0x65FFFFFF,
+                            0x3094A3B8,
+                            0x1864748B,
+                            0x25475569
                     };
                     strokePositions = new float[]{0.0f, 0.3f, 0.75f, 1.0f};
                 } else {
                     bodyColors = new int[]{
-                            0x70FFFFFF, // Top bright translucent white
-                            0x48F8FAFC,
-                            0x50EDF2F7,
-                            0x5AE2E8F0
+                            0x55FFFFFF,
+                            0x34F8FAFC,
+                            0x3AEDF2F7,
+                            0x42E2E8F0
                     };
                     bodyPositions = new float[]{0.0f, 0.35f, 0.7f, 1.0f};
                     strokeColors = new int[]{
-                            0xC5FFFFFF, // Bright white specular reflection
-                            0x70E2E8F0,
-                            0x40CBD5E1,
-                            0x5594A3B8
+                            0x88FFFFFF,
+                            0x48E2E8F0,
+                            0x28CBD5E1,
+                            0x3894A3B8
                     };
                     strokePositions = new float[]{0.0f, 0.3f, 0.75f, 1.0f};
                 }
@@ -321,11 +319,11 @@ public class LiquidGlassDrawable extends Drawable {
         strokePaint.setShader(strokeShader);
 
         // Optical Sheen line along top curvature
-        float sheenHeight = dp(1.8f);
-        sheenBoundsF.set(boundsF.left + dp(8f), boundsF.top + dp(1.2f),
-                boundsF.right - dp(8f), boundsF.top + dp(1.2f) + sheenHeight);
+        float sheenHeight = dp(1.6f);
+        sheenBoundsF.set(boundsF.left + dp(8f), boundsF.top + dp(1.0f),
+                boundsF.right - dp(8f), boundsF.top + dp(1.0f) + sheenHeight);
 
-        int sheenAlpha = dark ? 0x65 : 0x88;
+        int sheenAlpha = dark ? 0x48 : 0x65;
         int sheenColor = (sheenAlpha << 24) | 0x00FFFFFF;
         LinearGradient sheenShader = new LinearGradient(
                 sheenBoundsF.left, sheenBoundsF.centerY(),
@@ -337,8 +335,8 @@ public class LiquidGlassDrawable extends Drawable {
         sheenPaint.setShader(sheenShader);
 
         innerGlowPaint.setStyle(Paint.Style.STROKE);
-        innerGlowPaint.setStrokeWidth(dp(1.0f));
-        innerGlowPaint.setColor(dark ? 0x24FFFFFF : 0x45FFFFFF);
+        innerGlowPaint.setStrokeWidth(dp(0.8f));
+        innerGlowPaint.setColor(dark ? 0x16FFFFFF : 0x2AFFFFFF);
     }
 
     @Override
@@ -352,15 +350,17 @@ public class LiquidGlassDrawable extends Drawable {
         if (showSheen && !sheenBoundsF.isEmpty()) {
             canvas.save();
             canvas.clipPath(clipPath);
-            canvas.drawRoundRect(sheenBoundsF, dp(1f), dp(1f), sheenPaint);
+            canvas.drawRoundRect(sheenBoundsF, dp(0.8f), dp(0.8f), sheenPaint);
             canvas.restore();
         }
 
-        // 3. Draw Specular Refraction Rim (Border)
-        canvas.drawPath(strokePath, strokePaint);
+        // 3. Draw Specular Refraction Border (Clean, polished hairline)
+        if (showSheen) {
+            canvas.drawPath(strokePath, strokePaint);
+        }
 
         // 4. Draw Inner Volumetric Caustics / Prismatic Glow for iOS 27
-        if (style == STYLE_IOS27_LIQUID && !innerRect.isEmpty()) {
+        if (style == STYLE_IOS27_LIQUID && !innerRect.isEmpty() && showSheen) {
             canvas.save();
             canvas.clipPath(clipPath);
             canvas.drawPath(innerPath, innerGlowPaint);

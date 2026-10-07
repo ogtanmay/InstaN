@@ -117,6 +117,7 @@ public class SettingsManager {
 
         // Liquid Glass Nav Bar
         editor.putBoolean("enableLiquidGlassNavBar", FeatureFlags.enableLiquidGlassNavBar);
+        editor.putBoolean("enableLiquidGlassDirectTab", FeatureFlags.enableLiquidGlassDirectTab);
         editor.putInt("liquidGlassStyle", FeatureFlags.liquidGlassStyle);
         editor.putBoolean("liquidGlassBorderSheen", FeatureFlags.liquidGlassBorderSheen);
         editor.putInt("liquidGlassBlurRadius", FeatureFlags.liquidGlassBlurRadius);
@@ -235,6 +236,7 @@ public class SettingsManager {
 
         // Liquid Glass Nav Bar
         FeatureFlags.enableLiquidGlassNavBar = prefs.getBoolean("enableLiquidGlassNavBar", false);
+        FeatureFlags.enableLiquidGlassDirectTab = prefs.getBoolean("enableLiquidGlassDirectTab", true);
         FeatureFlags.liquidGlassStyle = prefs.getInt("liquidGlassStyle", 5);
         FeatureFlags.liquidGlassBorderSheen = prefs.getBoolean("liquidGlassBorderSheen", true);
         FeatureFlags.liquidGlassBlurRadius = prefs.getInt("liquidGlassBlurRadius", 25);

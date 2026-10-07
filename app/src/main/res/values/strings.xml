@@ -237,6 +237,8 @@
     <string name="liquid_glass_nav_bar">Liquid Glass Nav Bar</string>
     <string name="liquid_glass_nav_bar_desc">Floating frosted glass dock with specular sheen on Instagram\'s navigation bar</string>
     <string name="liquid_glass_nav_bar_subtitle">iOS 27 floating liquid glass dock with slider gesture and haptics</string>
+    <string name="liquid_glass_direct_tab">Liquid Glass Messages Tab</string>
+    <string name="liquid_glass_direct_tab_desc">Apply crystal clear liquid glass to Direct Messages action bar and composers</string>
     <string name="liquid_glass_section_title">Liquid Glass Nav Bar (iOS 27)</string>
     <string name="liquid_glass_style">Glass Dock Style</string>
     <string name="liquid_glass_style_ios27">iOS 27 Liquid Glass</string>

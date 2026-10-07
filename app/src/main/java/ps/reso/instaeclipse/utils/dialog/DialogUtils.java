@@ -1567,6 +1567,15 @@ public class DialogUtils {
         });
         glassCard.addView(glassSwitch);
 
+        ToggleRow directMsgSwitch = createSwitch(context, R.drawable.ic_sparkle, "#00C7BE",
+                I18n.t(context, R.string.liquid_glass_direct_tab), FeatureFlags.enableLiquidGlassDirectTab);
+        directMsgSwitch.setOnCheckedChangeListener((b, checked) -> {
+            FeatureFlags.enableLiquidGlassDirectTab = checked;
+            SettingsManager.saveAllFlags();
+            ps.reso.instaeclipse.mods.ui.LiquidGlassNavBarHook.refreshCurrentActivity();
+        });
+        glassCard.addView(directMsgSwitch);
+
         glassCard.addView(createActionRow(context, R.drawable.ic_sparkle,
                 I18n.t(context, R.string.liquid_glass_style) + ": " + getLiquidGlassStyleName(context), "#00C7BE", v -> {
                     showLiquidGlassStylePicker(context);

@@ -28,28 +28,31 @@ import ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader;
 import ps.reso.instaeclipse.utils.feature.FeatureFlags;
 
 /**
- * Ultra-Premium Liquid Glass Navigation Bar.
+ * Ultra-Premium Crystal Clear Liquid Glass Navigation Bar.
  *
- * Dedicated 4-Tab Liquid Glass Dock: Home, Reels, Messages, Profile.
+ * Dedicated 5-Tab Liquid Glass Dock: Home, Search, Reels, Messages, Profile.
  * Powered by Kyant0/AndroidLiquidGlass fluid lens optics:
- * - 7-path chromatic dispersion & volumetric optical caustics
- * - Dynamic damped spring physics engine with viscous stretch & rebound
- * - Convex refractive magnification of active and sliding icons (1.22x lens effect)
- * - Zero bloat, zero '+' button, 100% smooth 120 FPS fluid interaction
- * - Optimized for 2GB to 6GB RAM devices across all Android versions
+ * - Crystal clear fluid optics with zero harsh rims on the sliding droplet dart
+ * - Polished damped harmonic spring physics engine (smooth elastic rebound, fluid stretch)
+ * - Convex refractive magnification of active and sliding icons (1.20x lens effect)
+ * - Native Search icon integration in the nav bar
+ * - 100% smooth 120 FPS fluid interaction, optimized for 2GB to 6GB RAM devices across all Android versions
  */
 public class LiquidGlassSliderBarView extends FrameLayout {
 
     public static final int TAB_HOME = 0;
-    public static final int TAB_REELS = 1;
-    public static final int TAB_MESSAGES = 2;
-    public static final int TAB_PROFILE = 3;
+    public static final int TAB_SEARCH = 1;
+    public static final int TAB_REELS = 2;
+    public static final int TAB_MESSAGES = 3;
+    public static final int TAB_PROFILE = 4;
+
+    public static final int NUM_TABS = 5;
 
     public static final int LAYOUT_CENTER_CREATE = 0;
     public static final int LAYOUT_REELS_SEARCH = 1;
 
     public void setLayout(int layout) {
-        // Dedicated 4-Tab Liquid Glass Dock (Home, Reels, Messages, Profile)
+        // Dedicated 5-Tab Crystal Clear Liquid Glass Dock (Home, Search, Reels, Messages, Profile)
     }
 
     public void setOnCreateActionSelectedListener(Object listener) {
@@ -121,8 +124,8 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     private LiquidDropletIndicatorView dropletIndicator;
     private LinearLayout tabsRow;
 
-    private final FrameLayout[] tabContainers = new FrameLayout[4];
-    private final ImageView[] tabIconViews = new ImageView[4];
+    private final FrameLayout[] tabContainers = new FrameLayout[NUM_TABS];
+    private final ImageView[] tabIconViews = new ImageView[NUM_TABS];
 
     private int selectedIndex = 0;
     private OnTabSelectedListener tabListener;
@@ -175,7 +178,7 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         rowLp.bottomMargin = dp(16);
         bottomRow.setLayoutParams(rowLp);
 
-        // Continuous Floating Liquid Glass Dock
+        // Continuous Floating Crystal Clear Liquid Glass Dock
         SlideablePillLayout pillLayout = new SlideablePillLayout(context);
         pillLayout.setHost(this);
         tabsPill = pillLayout;
@@ -184,10 +187,10 @@ public class LiquidGlassSliderBarView extends FrameLayout {
 
         tabsPillDrawable = new LiquidGlassDrawable(context, FeatureFlags.liquidGlassStyle, FeatureFlags.liquidGlassBorderSheen);
         tabsPill.setBackground(tabsPillDrawable);
-        tabsPill.setElevation(dp(12));
+        tabsPill.setElevation(dp(10));
         setupPillOutline(tabsPill, barHeight, FeatureFlags.liquidGlassCornerRadius);
 
-        // Kyant0 Liquid Droplet Lens with Spring Physics Engine
+        // Kyant0 Crystal Clear Liquid Droplet Lens (Dart without outer rim)
         dropletIndicator = new LiquidDropletIndicatorView(context);
         dropletIndicator.setStyle(FeatureFlags.liquidGlassStyle);
         dropletIndicator.setChromaticEnabled(FeatureFlags.liquidGlassChromaticLens);
@@ -195,19 +198,19 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         int dropletHeight = Math.max(dp(36), barHeight - dp(10));
         dropletIndicator.setCornerRadius(dropletHeight / 2f);
 
-        FrameLayout.LayoutParams dropletLp = new FrameLayout.LayoutParams(dp(64), dropletHeight);
+        FrameLayout.LayoutParams dropletLp = new FrameLayout.LayoutParams(dp(54), dropletHeight);
         dropletLp.gravity = Gravity.CENTER_VERTICAL;
         dropletLp.leftMargin = 0;
         dropletIndicator.setLayoutParams(dropletLp);
         tabsPill.addView(dropletIndicator);
 
-        // 4 Tabs: Home, Reels, Messages, Profile
+        // 5 Tabs: Home, Search, Reels, Messages, Profile
         tabsRow = new LinearLayout(context);
         tabsRow.setOrientation(LinearLayout.HORIZONTAL);
         tabsRow.setLayoutParams(new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         tabsRow.setGravity(Gravity.CENTER);
 
-        buildFourTabs(context);
+        buildFiveTabs(context);
         tabsPill.addView(tabsRow);
 
         bottomRow.addView(tabsPill);
@@ -233,39 +236,41 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         post(() -> selectTab(0, false));
     }
 
-    private void buildFourTabs(Context context) {
+    private void buildFiveTabs(Context context) {
         tabsRow.removeAllViews();
 
         int[] iconDrawables = {
                 R.drawable.ic_home,
+                R.drawable.ic_search,
                 R.drawable.ic_reels,
                 R.drawable.ic_direct,
                 R.drawable.ic_profile
         };
         String[] fallbackKeys = {
                 ModuleResourceLoader.KEY_HOME,
+                ModuleResourceLoader.KEY_SEARCH,
                 ModuleResourceLoader.KEY_REEL,
                 ModuleResourceLoader.KEY_DIRECT,
                 ModuleResourceLoader.KEY_PROFILE
         };
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < NUM_TABS; i++) {
             final int index = i;
             FrameLayout tabContainer = new FrameLayout(context);
             LinearLayout.LayoutParams tLp = new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1.0f);
             tabContainer.setLayoutParams(tLp);
 
             ImageView iv = new ImageView(context);
-            int iconSize = dp(24);
+            int iconSize = dp(23);
             FrameLayout.LayoutParams ivLp = new FrameLayout.LayoutParams(iconSize, iconSize, Gravity.CENTER);
             iv.setLayoutParams(ivLp);
 
             android.graphics.drawable.Drawable tabIcon = ModuleResourceLoader.loadIcon(
                     context, iconDrawables[i], fallbackKeys[i], 0xFFFFFFFF);
             iv.setImageDrawable(tabIcon);
-            iv.setAlpha(i == selectedIndex ? 1.0f : 0.65f);
-            iv.setScaleX(i == selectedIndex ? 1.22f : 1.0f);
-            iv.setScaleY(i == selectedIndex ? 1.22f : 1.0f);
+            iv.setAlpha(i == selectedIndex ? 1.0f : 0.60f);
+            iv.setScaleX(i == selectedIndex ? 1.20f : 1.0f);
+            iv.setScaleY(i == selectedIndex ? 1.20f : 1.0f);
 
             tabContainer.addView(iv);
             tabContainers[i] = tabContainer;
@@ -383,23 +388,23 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     }
 
     public void selectTab(int index, boolean animate) {
-        if (index < 0 || index >= 4) return;
+        if (index < 0 || index >= NUM_TABS) return;
         selectedIndex = index;
 
-        // Convex Refractive Magnification of active and non-active icons (Kyant0 lens effect)
-        for (int i = 0; i < 4; i++) {
+        // Convex Refractive Magnification of active and non-active icons (lens effect)
+        for (int i = 0; i < NUM_TABS; i++) {
             boolean isSel = (i == index);
             if (tabIconViews[i] != null) {
-                float targetScale = isSel ? 1.22f : 1.0f;
-                float targetAlpha = isSel ? 1.0f : 0.65f;
+                float targetScale = isSel ? 1.20f : 1.0f;
+                float targetAlpha = isSel ? 1.0f : 0.60f;
 
                 if (animate) {
                     tabIconViews[i].animate()
                             .scaleX(targetScale)
                             .scaleY(targetScale)
                             .alpha(targetAlpha)
-                            .setDuration(220)
-                            .setInterpolator(new OvershootInterpolator(1.3f))
+                            .setDuration(240)
+                            .setInterpolator(new OvershootInterpolator(1.2f))
                             .start();
                 } else {
                     tabIconViews[i].setScaleX(targetScale);
@@ -418,7 +423,7 @@ public class LiquidGlassSliderBarView extends FrameLayout {
     }
 
     public void syncSelectedTab(int index) {
-        if (index < 0 || index >= 4 || index == selectedIndex) return;
+        if (index < 0 || index >= NUM_TABS || index == selectedIndex) return;
         selectTab(index, true);
     }
 
@@ -427,8 +432,8 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         tabsPill.post(() -> {
             int totalW = tabsPill.getWidth();
             if (totalW <= 0) return;
-            float tabW = totalW / 4f;
-            float dropletW = tabW - dp(8);
+            float tabW = totalW / (float) NUM_TABS;
+            float dropletW = tabW - dp(6);
 
             ViewGroup.LayoutParams lp = dropletIndicator.getLayoutParams();
             if (lp != null && lp.width != (int) dropletW) {
@@ -457,8 +462,8 @@ public class LiquidGlassSliderBarView extends FrameLayout {
         if (tabsPill == null || dropletIndicator == null) return false;
         int totalW = tabsPill.getWidth();
         if (totalW <= 0) return false;
-        float tabW = totalW / 4f;
-        float dropletW = tabW - dp(8);
+        float tabW = totalW / (float) NUM_TABS;
+        float dropletW = tabW - dp(6);
 
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
@@ -479,21 +484,21 @@ public class LiquidGlassSliderBarView extends FrameLayout {
                     dropletIndicator.snapToPosition(clampedX);
 
                     // Fluid elongation during drag (liquid stretching)
-                    dropletIndicator.setScaleX(1.18f);
+                    dropletIndicator.setScaleX(1.15f);
 
                     int hoveredIndex = (int) (event.getX() / tabW);
-                    hoveredIndex = Math.max(0, Math.min(3, hoveredIndex));
+                    hoveredIndex = Math.max(0, Math.min(NUM_TABS - 1, hoveredIndex));
                     if (hoveredIndex != lastHapticIndex) {
                         lastHapticIndex = hoveredIndex;
                         triggerHapticFeedback();
 
-                        // Magnify icon under the sliding liquid lens
-                        for (int k = 0; k < 4; k++) {
+                        // Magnify icon under the sliding crystal liquid lens
+                        for (int k = 0; k < NUM_TABS; k++) {
                             boolean isHovered = (k == hoveredIndex);
                             if (tabIconViews[k] != null) {
-                                tabIconViews[k].setScaleX(isHovered ? 1.22f : 1.0f);
-                                tabIconViews[k].setScaleY(isHovered ? 1.22f : 1.0f);
-                                tabIconViews[k].setAlpha(isHovered ? 1.0f : 0.65f);
+                                tabIconViews[k].setScaleX(isHovered ? 1.20f : 1.0f);
+                                tabIconViews[k].setScaleY(isHovered ? 1.20f : 1.0f);
+                                tabIconViews[k].setAlpha(isHovered ? 1.0f : 0.60f);
                             }
                         }
                     }
@@ -503,12 +508,12 @@ public class LiquidGlassSliderBarView extends FrameLayout {
             case MotionEvent.ACTION_UP:
                 if (isDraggingSlider) {
                     int finalIndex = (int) (event.getX() / tabW);
-                    finalIndex = Math.max(0, Math.min(3, finalIndex));
+                    finalIndex = Math.max(0, Math.min(NUM_TABS - 1, finalIndex));
                     selectTab(finalIndex, true);
                     isDraggingSlider = false;
                 } else {
                     int clickedIndex = (int) (event.getX() / tabW);
-                    clickedIndex = Math.max(0, Math.min(3, clickedIndex));
+                    clickedIndex = Math.max(0, Math.min(NUM_TABS - 1, clickedIndex));
                     selectTab(clickedIndex, true);
                 }
                 return true;

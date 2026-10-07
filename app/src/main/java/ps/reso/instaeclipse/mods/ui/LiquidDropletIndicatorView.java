@@ -19,26 +19,24 @@ import androidx.annotation.Nullable;
  * Ultra-Premium Liquid Glass Droplet Lens based on Kyant0/AndroidLiquidGlass.
  *
  * Implements real physical fluid optics:
- * - Dynamic damped harmonic spring physics engine with viscous fluid stretching,
- *   drag inertia, and elastic rebound.
- * - Multi-pass optical refraction layers:
- *   1. Crystal clear fluid glass body with subtle translucency
- *   2. Subsurface caustic diffusion core
- *   3. Top convex meniscus specular sheen arc
- *   4. 7-path chromatic dispersion spectrum rim (Ruby -> Amber -> Apex White -> Cyan -> Indigo)
- * - Zero allocation in onDraw() for silky smooth 120 FPS on 2GB to 6GB RAM devices.
+ * - Crystal clear liquid glass body with seamless optical refractive clarity.
+ * - Dart / Droplet Indicator: crystal clear, fully furnished, NO harsh outer rim/stroke.
+ * - Dynamic damped harmonic spring physics engine with smooth, polished inertia and fluid stretching.
+ * - Multi-pass optical caustics:
+ *   1. Crystal clear pure fluid glass core (high optical transparency)
+ *   2. Radial caustics illumination center
+ *   3. Delicate top convex curvature sheen reflection
+ * - Zero allocations in onDraw() for 120 FPS buttery smooth rendering on 2GB to 6GB RAM devices.
  * - 100% crash-free compatibility across all Android versions (API 28 through 36+).
  */
 public class LiquidDropletIndicatorView extends View {
 
     private final Paint bodyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint chromaticRimPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint specularPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint innerSheenPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint causticGlowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private final RectF boundsF = new RectF();
-    private final RectF strokeBoundsF = new RectF();
     private final RectF sheenBoundsF = new RectF();
     private final Path clipPath = new Path();
 
@@ -47,7 +45,7 @@ public class LiquidDropletIndicatorView extends View {
     private float cornerRadius = 24f;
     private int accentColor = 0;
 
-    // Spring Physics State (Damped Harmonic Oscillator)
+    // Polished Damped Harmonic Oscillator (Stiffness: 280, Damping: 24 for ultra-smooth response)
     private float currentTranslationX = 0f;
     private float targetTranslationX = 0f;
     private float velocityX = 0f;
@@ -58,8 +56,8 @@ public class LiquidDropletIndicatorView extends View {
     private float targetScaleY = 1f;
     private float velocityScaleY = 0f;
 
-    private static final float SPRING_STIFFNESS = 340f;
-    private static final float SPRING_DAMPING = 26f;
+    private static final float SPRING_STIFFNESS = 280f;
+    private static final float SPRING_DAMPING = 24f;
 
     private TimeAnimator springAnimator;
 
@@ -75,13 +73,8 @@ public class LiquidDropletIndicatorView extends View {
 
     private void init() {
         bodyPaint.setStyle(Paint.Style.FILL);
-
-        chromaticRimPaint.setStyle(Paint.Style.STROKE);
-        chromaticRimPaint.setStrokeWidth(dp(1.8f));
-
         specularPaint.setStyle(Paint.Style.STROKE);
-        specularPaint.setStrokeWidth(dp(1.2f));
-
+        specularPaint.setStrokeWidth(dp(1.0f));
         innerSheenPaint.setStyle(Paint.Style.FILL);
         causticGlowPaint.setStyle(Paint.Style.FILL);
 
@@ -92,7 +85,7 @@ public class LiquidDropletIndicatorView extends View {
         springAnimator = new TimeAnimator();
         springAnimator.setTimeListener((animation, totalTime, deltaTime) -> {
             if (deltaTime <= 0) return;
-            // Clamp max delta step to 32ms to prevent integration blow-up on low-end devices
+            // Cap delta time to 32ms to avoid integration instabilities
             float dt = Math.min(deltaTime / 1000f, 0.032f);
 
             // 1. Spring Translation X
@@ -101,31 +94,31 @@ public class LiquidDropletIndicatorView extends View {
             velocityX += springForceX * dt;
             currentTranslationX += velocityX * dt;
 
-            // Fluid viscous elongation based on velocity (Kyant0 liquid glass dynamics)
+            // Fluid viscous elongation during motion (smooth fluid lens stretch)
             float speed = Math.abs(velocityX);
-            float stretchRatio = Math.min(0.22f, speed / 3000f);
+            float stretchRatio = Math.min(0.16f, speed / 3200f);
             targetScaleX = 1.0f + stretchRatio;
-            targetScaleY = 1.0f - (stretchRatio * 0.40f);
+            targetScaleY = 1.0f - (stretchRatio * 0.35f);
 
             // 2. Spring Scale X
             float dispScaleX = currentScaleX - targetScaleX;
-            float springForceScaleX = -SPRING_STIFFNESS * 1.5f * dispScaleX - SPRING_DAMPING * 1.5f * velocityScaleX;
+            float springForceScaleX = -SPRING_STIFFNESS * 1.4f * dispScaleX - SPRING_DAMPING * 1.4f * velocityScaleX;
             velocityScaleX += springForceScaleX * dt;
             currentScaleX += velocityScaleX * dt;
 
             // 3. Spring Scale Y
             float dispScaleY = currentScaleY - targetScaleY;
-            float springForceScaleY = -SPRING_STIFFNESS * 1.5f * dispScaleY - SPRING_DAMPING * 1.5f * velocityScaleY;
+            float springForceScaleY = -SPRING_STIFFNESS * 1.4f * dispScaleY - SPRING_DAMPING * 1.4f * velocityScaleY;
             velocityScaleY += springForceScaleY * dt;
             currentScaleY += velocityScaleY * dt;
 
             setTranslationX(currentTranslationX);
-            setScaleX(Math.max(0.75f, Math.min(1.35f, currentScaleX)));
-            setScaleY(Math.max(0.75f, Math.min(1.25f, currentScaleY)));
+            setScaleX(Math.max(0.85f, Math.min(1.25f, currentScaleX)));
+            setScaleY(Math.max(0.85f, Math.min(1.20f, currentScaleY)));
 
-            // Settle to rest when energy falls below threshold
-            if (Math.abs(dispX) < 0.25f && Math.abs(velocityX) < 8f &&
-                    Math.abs(dispScaleX) < 0.01f && Math.abs(velocityScaleX) < 0.08f) {
+            // Settle smoothly when kinetic energy dissipates
+            if (Math.abs(dispX) < 0.2f && Math.abs(velocityX) < 6f &&
+                    Math.abs(dispScaleX) < 0.008f && Math.abs(velocityScaleX) < 0.06f) {
                 currentTranslationX = targetTranslationX;
                 currentScaleX = 1f;
                 currentScaleY = 1f;
@@ -192,8 +185,6 @@ public class LiquidDropletIndicatorView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         boundsF.set(0, 0, w, h);
-        float halfStroke = dp(0.9f);
-        strokeBoundsF.set(halfStroke, halfStroke, w - halfStroke, h - halfStroke);
         updateShaders();
     }
 
@@ -211,35 +202,35 @@ public class LiquidDropletIndicatorView extends View {
         float width = boundsF.width();
         float height = boundsF.height();
 
-        // 1. Crystal Optical Glass Body
+        // Crystal Clear Optical Liquid Glass Body (Translucent, pure refraction, clear dart)
         int[] bodyColors;
-        float[] bodyPositions = new float[]{0.0f, 0.38f, 0.72f, 1.0f};
+        float[] bodyPositions = new float[]{0.0f, 0.40f, 0.75f, 1.0f};
 
         switch (style) {
             case LiquidGlassDrawable.STYLE_OBSIDIAN:
                 bodyColors = new int[]{
-                        0x6E334155, // Frosted slate apex
-                        0x481E293B,
-                        0x3C0F172A,
-                        0x50020617
+                        0x44334155, // Translucent dark glass apex
+                        0x2E1E293B,
+                        0x220F172A,
+                        0x32020617
                 };
                 break;
 
             case LiquidGlassDrawable.STYLE_AURORA:
                 bodyColors = new int[]{
-                        0x688B5CF6,
-                        0x4C6366F1,
-                        0x3C06B6D4,
-                        0x300284C7
+                        0x4A8B5CF6,
+                        0x346366F1,
+                        0x2606B6D4,
+                        0x200284C7
                 };
                 break;
 
             case LiquidGlassDrawable.STYLE_CRYSTAL_CLEAR:
                 bodyColors = new int[]{
-                        0x40FFFFFF,
-                        0x20FFFFFF,
-                        0x15E2E8F0,
-                        0x22CBD5E1
+                        0x30FFFFFF, // Crystal clear diamond sheen
+                        0x15FFFFFF, // Optical water transparency
+                        0x0EE2E8F0, // High clarity refraction
+                        0x18CBD5E1  // Soft water base
                 };
                 break;
 
@@ -248,17 +239,17 @@ public class LiquidDropletIndicatorView extends View {
                 if (accentColor != 0) {
                     int tint = (accentColor & 0x00FFFFFF);
                     bodyColors = new int[]{
-                            0x55FFFFFF,
-                            (0x35 << 24) | tint,
-                            (0x25 << 24) | tint,
-                            0x32E0E7FF
+                            0x3EFFFFFF,
+                            (0x22 << 24) | tint,
+                            (0x15 << 24) | tint,
+                            0x22E0E7FF
                     };
                 } else {
                     bodyColors = new int[]{
-                            0x58FFFFFF, // Pure diamond apex glint (35% white translucency)
-                            0x30F8FAFC, // Translucent fluid water core (19% opacity)
-                            0x25E2E8F0, // Optical refractive glass volume (14% opacity)
-                            0x35E0E7FF  // Delicate sky-violet iridescent caustic base (21% opacity)
+                            0x42FFFFFF, // Crystal clear apex reflection (subtle glint)
+                            0x1EF8FAFC, // Crystal fluid clear water core (super transparent)
+                            0x14E2E8F0, // Optical refraction glass body
+                            0x20E0E7FF  // Delicate crystal caustic tint
                     };
                 }
                 break;
@@ -271,69 +262,25 @@ public class LiquidDropletIndicatorView extends View {
         );
         bodyPaint.setShader(bodyShader);
 
-        // 2. 7-Path Chromatic Dispersion Spectrum Rim (Kyant0 optical dispersion)
-        int[] chromaticColors;
-        float[] chromaticPositions = new float[]{0.0f, 0.18f, 0.35f, 0.50f, 0.68f, 0.85f, 1.0f};
-
-        if (chromaticEnabled && style == LiquidGlassDrawable.STYLE_IOS27_LIQUID) {
-            // Authentic 7-path dispersion: Ruby -> Amber -> Solar Yellow -> Apex White -> Cyan -> Sky Blue -> Violet
-            chromaticColors = new int[]{
-                    0xEDF43F5E, // Ruby Pink on left meniscus
-                    0xF0FB923C, // Amber Orange
-                    0xF4FACC15, // Solar Yellow
-                    0xFFFFFFFF, // Pure diamond specular glint at apex
-                    0xF022D3EE, // Electric Cyan on right meniscus
-                    0xF038BDF8, // Sky Blue
-                    0xED818CF8  // Prismatic Indigo
-            };
-        } else if (style == LiquidGlassDrawable.STYLE_OBSIDIAN) {
-            chromaticColors = new int[]{
-                    0x8594A3B8,
-                    0x6564748B,
-                    0x50475569,
-                    0xDEFFFFFF,
-                    0x50475569,
-                    0x6564748B,
-                    0x8094A3B8
-            };
-        } else {
-            chromaticColors = new int[]{
-                    0x88FFFFFF,
-                    0x60FFFFFF,
-                    0x45FFFFFF,
-                    0xF0FFFFFF,
-                    0x45FFFFFF,
-                    0x60FFFFFF,
-                    0x88FFFFFF
-            };
-        }
-
-        LinearGradient chromaticShader = new LinearGradient(
-                strokeBoundsF.left, strokeBoundsF.centerY(),
-                strokeBoundsF.right, strokeBoundsF.centerY(),
-                chromaticColors, chromaticPositions, Shader.TileMode.CLAMP
-        );
-        chromaticRimPaint.setShader(chromaticShader);
-
-        // 3. Top Convex Lens Sheen Arc (simulates overhead specular reflection off curved liquid drop)
-        float sheenHeight = dp(2.4f);
-        sheenBoundsF.set(boundsF.left + dp(6f), boundsF.top + dp(1.2f),
-                boundsF.right - dp(6f), boundsF.top + dp(1.2f) + sheenHeight);
+        // Top Convex Lens Specular Sheen Arc (Curved liquid meniscus highlight without any border rim)
+        float sheenHeight = dp(2.0f);
+        sheenBoundsF.set(boundsF.left + dp(6f), boundsF.top + dp(1.0f),
+                boundsF.right - dp(6f), boundsF.top + dp(1.0f) + sheenHeight);
 
         LinearGradient sheenShader = new LinearGradient(
                 sheenBoundsF.left, sheenBoundsF.centerY(),
                 sheenBoundsF.right, sheenBoundsF.centerY(),
-                new int[]{0x00FFFFFF, 0xCCFFFFFF, 0xCCFFFFFF, 0x00FFFFFF},
-                new float[]{0.0f, 0.22f, 0.78f, 1.0f},
+                new int[]{0x00FFFFFF, 0x88FFFFFF, 0x88FFFFFF, 0x00FFFFFF},
+                new float[]{0.0f, 0.25f, 0.75f, 1.0f},
                 Shader.TileMode.CLAMP
         );
         innerSheenPaint.setShader(sheenShader);
 
-        // 4. Subtle Radial Caustic Diffusion Center
+        // Radial Caustic Diffusion Center (Pure liquid volume glow)
         RadialGradient causticShader = new RadialGradient(
                 boundsF.centerX(), boundsF.centerY(),
                 Math.max(width, height) * 0.55f,
-                new int[]{0x22FFFFFF, 0x00FFFFFF},
+                new int[]{0x1CFFFFFF, 0x00FFFFFF},
                 new float[]{0.0f, 1.0f},
                 Shader.TileMode.CLAMP
         );
@@ -348,24 +295,20 @@ public class LiquidDropletIndicatorView extends View {
         clipPath.reset();
         clipPath.addRoundRect(boundsF, r, r, Path.Direction.CW);
 
-        // Procedural optical multi-pass rendering for 100% consistent Kyant0 liquid glass
-        // 1. Draw Liquid Glass Body
+        // Multi-pass optical crystal liquid glass rendering without any border/rim on the dart
+        // 1. Crystal Clear Liquid Glass Body
         canvas.drawRoundRect(boundsF, r, r, bodyPaint);
 
-        // 2. Draw Caustic Diffusion Center
+        // 2. Optical Caustic Diffusion Core
         canvas.drawRoundRect(boundsF, r, r, causticGlowPaint);
 
-        // 3. Draw Top Convex Lens Sheen Arc
+        // 3. Delicate Top Specular Convex Curvature Sheen (no outer stroke/rim)
         if (!sheenBoundsF.isEmpty()) {
             canvas.save();
             canvas.clipPath(clipPath);
-            canvas.drawRoundRect(sheenBoundsF, dp(1.2f), dp(1.2f), innerSheenPaint);
+            canvas.drawRoundRect(sheenBoundsF, dp(1.0f), dp(1.0f), innerSheenPaint);
             canvas.restore();
         }
-
-        // 4. Draw 7-Path Chromatic Dispersion Rim
-        float strokeR = Math.max(0, r - dp(0.9f));
-        canvas.drawRoundRect(strokeBoundsF, strokeR, strokeR, chromaticRimPaint);
     }
 
     private float dp(float v) {

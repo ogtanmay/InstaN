@@ -29,8 +29,8 @@ import ps.reso.instaeclipse.utils.log.ModuleLog;
 /**
  * Liquid Glass Navigation Bar Hook
  *
- * Replaces Instagram's traditional bottom bar with the modern floating liquid glass
- * slider navigation bar and create action popup (matching iOS 18 glass aesthetics).
+ * Replaces Instagram's traditional bottom bar with the crystal clear floating liquid glass
+ * slider navigation bar featuring Home, Search, Reels, Messages, and Profile tabs.
  */
 public class LiquidGlassNavBarHook {
 
@@ -179,10 +179,13 @@ public class LiquidGlassNavBarHook {
             case LiquidGlassSliderBarView.TAB_HOME: // 0: Home
                 clickFirstMatching(activity, "feed_tab", "home_tab");
                 break;
-            case LiquidGlassSliderBarView.TAB_REELS: // 1: Reels
+            case LiquidGlassSliderBarView.TAB_SEARCH: // 1: Search
+                clickFirstMatching(activity, "search_tab");
+                break;
+            case LiquidGlassSliderBarView.TAB_REELS: // 2: Reels
                 clickFirstMatching(activity, "clips_tab");
                 break;
-            case LiquidGlassSliderBarView.TAB_MESSAGES: // 2: Messages / Direct
+            case LiquidGlassSliderBarView.TAB_MESSAGES: // 3: Messages / Direct
                 tabId = res.getIdentifier("direct_tab", "id", pkg);
                 if (tabId != 0 && activity.findViewById(tabId) != null) {
                     activity.findViewById(tabId).performClick();
@@ -190,7 +193,7 @@ public class LiquidGlassNavBarHook {
                     clickFirstMatching(activity, "action_bar_inbox_button", "inbox_button", "direct_tab");
                 }
                 break;
-            case LiquidGlassSliderBarView.TAB_PROFILE: // 3: Profile
+            case LiquidGlassSliderBarView.TAB_PROFILE: // 4: Profile
                 clickFirstMatching(activity, "profile_tab", "user_tab");
                 break;
         }
@@ -216,12 +219,15 @@ public class LiquidGlassNavBarHook {
         String pkg = activity.getPackageName();
 
         int feedId = res.getIdentifier("feed_tab", "id", pkg);
+        int searchId = res.getIdentifier("search_tab", "id", pkg);
         int clipsId = res.getIdentifier("clips_tab", "id", pkg);
         int directId = res.getIdentifier("direct_tab", "id", pkg);
         int profileId = res.getIdentifier("profile_tab", "id", pkg);
 
         if (feedId != 0 && isSelected(activity, feedId)) {
             sliderBar.syncSelectedTab(LiquidGlassSliderBarView.TAB_HOME);
+        } else if (searchId != 0 && isSelected(activity, searchId)) {
+            sliderBar.syncSelectedTab(LiquidGlassSliderBarView.TAB_SEARCH);
         } else if (clipsId != 0 && isSelected(activity, clipsId)) {
             sliderBar.syncSelectedTab(LiquidGlassSliderBarView.TAB_REELS);
         } else if (directId != 0 && isSelected(activity, directId)) {
@@ -243,12 +249,10 @@ public class LiquidGlassNavBarHook {
 
         try {
             if ("ai".equals(action)) {
-                // Open InstaEclipse options / AI customization
                 DialogUtils.showEclipseOptionsDialog(activity);
                 return;
             }
 
-            // Try clicking native action bar creation buttons if visible
             if ("post".equals(action)) {
                 int shareId = res.getIdentifier("share_tab", "id", pkg);
                 if (shareId != 0) {
@@ -257,7 +261,6 @@ public class LiquidGlassNavBarHook {
                 }
             }
 
-            // Try URI schemes
             Intent intent = new Intent(Intent.ACTION_VIEW);
             if ("reel".equals(action)) {
                 intent.setData(Uri.parse("instagram://reels_camera"));
@@ -271,14 +274,12 @@ public class LiquidGlassNavBarHook {
             intent.setPackage(pkg);
             activity.startActivity(intent);
         } catch (Throwable t) {
-            // Intent fallback to MediaCaptureActivity
             try {
                 Intent fallback = new Intent();
                 fallback.setComponent(new ComponentName(pkg, "com.instagram.creation.activity.MediaCaptureActivity"));
                 fallback.setPackage(pkg);
                 activity.startActivity(fallback);
             } catch (Throwable ignored) {
-                // Secondary fallback
                 try {
                     int searchTabId = res.getIdentifier("search_tab", "id", pkg);
                     if (searchTabId != 0) {

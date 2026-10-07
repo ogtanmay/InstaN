@@ -92,8 +92,9 @@ public class FeatureFlags {
     public static int themePresetId = 1;
     public static String themePaletteJson = "";
 
-    // Liquid Glass Nav Bar
+    // Liquid Glass Nav Bar & Message Tab
     public static boolean enableLiquidGlassNavBar = false;
+    public static boolean enableLiquidGlassDirectTab = true; // Liquid glass styling in Direct / Messages tab
     public static int liquidGlassStyle = 5; // 0: Floating Pill, 1: Docked Glass, 2: Aurora Neon, 3: Obsidian Dark, 4: Crystal Clear, 5: iOS 27 Liquid Glass
     public static int liquidGlassNavLayout = 0; // 0: Direct & Center Create (+), 1: Reels, Direct & Search
     public static boolean liquidGlassChromaticLens = true; // Chromatic aberration & refractive magnification lens

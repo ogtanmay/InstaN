@@ -368,9 +368,10 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                         ModuleLog.line("(InstaEclipse | Theme): ❌ Failed to hook");
                     }
 
-                    // Liquid Glass Navigation Bar
+                    // Liquid Glass Navigation Bar & Direct Messages Tab
                     try {
                         new ps.reso.instaeclipse.mods.ui.LiquidGlassNavBarHook().install(hostClassLoader);
+                        new ps.reso.instaeclipse.mods.ui.LiquidGlassDirectMsgHook().install(hostClassLoader);
                     } catch (Throwable ignored) {
                         ModuleLog.line("(InstaEclipse | LiquidGlass): ❌ Failed to hook");
                     }

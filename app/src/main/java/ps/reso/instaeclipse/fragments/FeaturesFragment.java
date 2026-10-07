@@ -1066,6 +1066,7 @@ public class FeaturesFragment extends Fragment {
         defs.add(getString(R.string.liquid_glass_nav_bar));
         defs.add(Arrays.asList(
                 createSwitch(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_nav_bar), "enableLiquidGlassNavBar"),
+                createSwitch(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_direct_tab), "enableLiquidGlassDirectTab"),
                 createClickable(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_style) + ": " + getLiquidGlassStyleName(), this::pickLiquidGlassStyle),
                 createClickable(R.drawable.ic_sparkle, "#00C7BE", getString(R.string.liquid_glass_customize_nav), () ->
                         themeCustomizerLauncher.launch(new Intent(requireContext(), ThemeCustomizerActivity.class))),

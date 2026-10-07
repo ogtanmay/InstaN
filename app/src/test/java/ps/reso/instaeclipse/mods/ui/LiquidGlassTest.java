@@ -12,14 +12,17 @@ public class LiquidGlassTest {
     @Test
     public void testLiquidGlassFlagsAndStyles() {
         FeatureFlags.enableLiquidGlassNavBar = true;
+        FeatureFlags.enableLiquidGlassDirectTab = true;
         FeatureFlags.liquidGlassStyle = LiquidGlassDrawable.STYLE_FLOATING_PILL;
         FeatureFlags.liquidGlassBorderSheen = true;
 
         assertTrue(FeatureFlags.enableLiquidGlassNavBar);
+        assertTrue(FeatureFlags.enableLiquidGlassDirectTab);
         assertEquals(LiquidGlassDrawable.STYLE_FLOATING_PILL, FeatureFlags.liquidGlassStyle);
         assertTrue(FeatureFlags.liquidGlassBorderSheen);
 
         FeatureStatusTracker.setHooked("LiquidGlassNavBar");
+        FeatureStatusTracker.setHooked("LiquidGlassDirectMsg");
         FeatureManager.refreshFeatureStatus();
         assertTrue(FeatureStatusTracker.getStatus().containsKey("LiquidGlassNavBar"));
         assertEquals(Boolean.TRUE, FeatureStatusTracker.getStatus().get("LiquidGlassNavBar"));
@@ -41,13 +44,17 @@ public class LiquidGlassTest {
         assertEquals(0, LiquidGlassSliderBarView.LAYOUT_CENTER_CREATE);
         assertEquals(1, LiquidGlassSliderBarView.LAYOUT_REELS_SEARCH);
 
+        // 5 Dedicated Tabs: Home, Search, Reels, Messages, Profile
         assertEquals(0, LiquidGlassSliderBarView.TAB_HOME);
-        assertEquals(1, LiquidGlassSliderBarView.TAB_REELS);
-        assertEquals(2, LiquidGlassSliderBarView.TAB_MESSAGES);
-        assertEquals(3, LiquidGlassSliderBarView.TAB_PROFILE);
+        assertEquals(1, LiquidGlassSliderBarView.TAB_SEARCH);
+        assertEquals(2, LiquidGlassSliderBarView.TAB_REELS);
+        assertEquals(3, LiquidGlassSliderBarView.TAB_MESSAGES);
+        assertEquals(4, LiquidGlassSliderBarView.TAB_PROFILE);
+        assertEquals(5, LiquidGlassSliderBarView.NUM_TABS);
 
         // Test fallback vector keys
         assertEquals("home", ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader.KEY_HOME);
+        assertEquals("search", ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader.KEY_SEARCH);
         assertEquals("reel", ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader.KEY_REEL);
         assertEquals("direct", ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader.KEY_DIRECT);
         assertEquals("profile", ps.reso.instaeclipse.mods.ui.utils.ModuleResourceLoader.KEY_PROFILE);
